@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TelemetryOS — Microservice Console (FES DMS style)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-blue:#1F4397; --brand-green:#39A248;
+  --metric-value:#2B3674; --metric-label:rgba(43,54,116,.72); --metric-muted:#A3AED0;
+  --text-heading:#101828; --text-strong:#292929; --text-muted:#667085; --text-placeholder:rgba(41,41,41,.37);
+  --surface:#FFFFFF; --input-surface:#F9FAFB; --canvas:#EEF2F9;
+  --divider:#C4C4C4; --border-subtle:#E2E8F0; --input-border:rgba(41,41,41,.28);
+  --status-success:#39A248; --status-pending:#F5A623; --status-error:#EF4444; --status-info:#4318FF;
+  --font-bold:'Raleway',sans-serif; --font-base:'Raleway',sans-serif;
+  --font-num:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif; --font-metric:var(--font-num);
+  --r-chip:8px; --r-control:12px; --r-container:16px; --r-card:20px; --r-pill:9999px;
+  --shadow-xs:0 1px .5px rgba(29,41,61,.02);
+  --shadow-card:0 6px 24px rgba(0,0,0,.06);
+  --shadow-float:0 3px 9px rgba(31,67,151,.16);
+  --glass-bg:linear-gradient(90deg,rgba(255,255,255,.82),rgba(255,255,255,.80));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-base);color:var(--text-strong);background:var(--canvas);-webkit-font-smoothing:antialiased;line-height:1.5}
+[data-lucide]{display:inline-flex}
+.flex{display:flex}.ac{align-items:center}.jc{justify-content:center}.jb{justify-content:space-between}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}.g24{gap:24px}.wrap{flex-wrap:wrap}.mt8{margin-top:8px}
+
+/* ---------- Glass header ---------- */
+.topbar{position:sticky;top:12px;z-index:50;margin:12px 32px 0;
+  background:var(--glass-bg);backdrop-filter:blur(10.5px);-webkit-backdrop-filter:blur(10.5px);
+  border:1.5px solid #fff;border-radius:var(--r-container);box-shadow:var(--shadow-card);
+  display:flex;align-items:center;justify-content:space-between;padding:14px 28px}
+.logo{font-family:var(--font-bold);font-weight:700;letter-spacing:.2px;color:var(--brand-blue);white-space:nowrap;display:flex;align-items:center;gap:10px}
+.logo .mark{width:38px;height:38px;border-radius:10px;background:var(--brand-green);border:1.5px solid var(--brand-green);color:#fff;display:grid;place-items:center;font-family:var(--font-bold);font-weight:700;font-size:13px;letter-spacing:.2px;flex:0 0 auto;box-shadow:0 2px 6px rgba(57,162,72,.3)}
+.logo .ltxt{display:flex;flex-direction:column;line-height:1.02}
+.logo .l1{font-size:19px;font-weight:700;color:var(--brand-blue)}
+.logo .l2{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--brand-green)}
+.logo .i{color:var(--brand-green)}
+.nav{display:flex;gap:24px;align-items:center;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.nav a{font-family:var(--font-bold);font-weight:700;font-size:13px;text-transform:uppercase;text-decoration:none;color:var(--brand-blue);cursor:pointer;letter-spacing:.3px;display:flex;gap:6px;align-items:center;white-space:nowrap;position:relative;padding:6px 0}
+.nav a.active{color:var(--brand-green)}
+.nav a.disabled{color:var(--brand-blue);cursor:default;pointer-events:none}
+.nav a.active::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2.5px;border-radius:3px;background:var(--brand-green)}
+.topbar-right{display:flex;gap:14px;align-items:center;color:var(--brand-blue)}
+.topbar-right .ico{width:34px;height:34px;display:grid;place-items:center;font-size:14px;border-radius:9px;cursor:pointer;position:relative;background:rgba(255,255,255,.5)}
+.topbar-right .ico:hover{background:#fff}
+.topbar-right .ico svg{width:18px;height:18px}
+.topbar-right .ico .dot{position:absolute;top:5px;right:5px;min-width:15px;height:15px;padding:0 3px;border-radius:9px;background:var(--status-error);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;font-family:var(--font-num)}
+.tbdiv{width:1px;height:26px;background:var(--border-subtle)}
+.profile{display:flex;gap:9px;align-items:center;color:var(--brand-blue);cursor:pointer}
+.profile .pavatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2a6bcf,#16357d);color:#fff;display:grid;place-items:center;font-family:var(--font-bold);font-weight:700;font-size:13px;flex:0 0 auto;letter-spacing:.5px}
+.profile .pinfo{display:flex;flex-direction:column;line-height:1.1}
+.profile .pn{font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--brand-blue)}
+.profile .pr{font-family:var(--font-bold);font-weight:400;font-size:12px;color:#4a63ad}
+.profile .psort{width:16px;height:16px;color:var(--brand-blue);margin-left:2px;transition:transform .15s}
+.profile.open .psort{transform:rotate(180deg)}
+.profmenu{position:absolute;top:calc(100% + 12px);right:0;background:#fff;border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-float);padding:6px;min-width:186px;display:none;z-index:70}
+.profmenu.show{display:block}
+.pmi{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-strong);cursor:pointer;white-space:nowrap}
+.pmi:hover{background:#F2F6FF}
+.pmi svg{width:16px;height:16px}
+.pmi.danger{color:var(--status-error)}
+.pmi.danger:hover{background:#FDEAEA}
+.pmdiv{height:1px;background:var(--border-subtle);margin:4px 6px}
+
+/* ---------- Page scaffolding ---------- */
+.stage{max-width:1460px;margin:0 auto}
+.page{padding:32px 32px 80px}
+.screen{display:none}.screen.show{display:block}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+h1.title{font-family:var(--font-bold);font-weight:700;font-size:22px;color:var(--text-heading)}
+.page-head .sub{font-size:14px;color:var(--text-muted);margin-top:1px;max-width:680px}
+.section-title{font-family:var(--font-bold);font-weight:700;font-size:16px;color:var(--text-heading)}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--r-container);box-shadow:var(--shadow-card)}
+.card.pad{padding:22px}
+.mt16{margin-top:16px}.mt22{margin-top:22px}.mt24{margin-top:24px}
+
+/* buttons */
+.btn{height:44px;border-radius:var(--r-control);padding:0 18px;display:inline-flex;align-items:center;gap:7px;font-family:var(--font-bold);font-weight:700;font-size:14px;border:1px solid transparent;cursor:pointer;box-shadow:var(--shadow-xs);white-space:nowrap;text-decoration:none}
+.btn svg{width:17px;height:17px}
+.btn-primary{background:var(--brand-blue);color:#fff}
+.btn-primary:hover{background:#1a3a85}
+.btn-green{background:var(--brand-green);color:#fff}
+.btn-green:hover{background:#33913f}
+.btn-outline{background:#fff;border-color:var(--brand-blue);color:var(--brand-blue)}
+.btn-ghost{background:#fff;border-color:var(--border-subtle);color:var(--text-strong)}
+.btn-ghost:hover{background:#F7F9FC}
+.btn-danger{background:var(--status-error);color:#fff}
+.btn-danger:hover{background:#dc2626}
+/* confirm dialog */
+.cfm-ic{width:58px;height:58px;border-radius:17px;background:#FDEAEA;color:var(--status-error);display:grid;place-items:center;margin:0 auto 16px}
+.cfm-ic svg{width:27px;height:27px}
+#confirmModal h3{font-family:var(--font-bold);font-weight:700;font-size:19px;color:var(--text-heading);margin-bottom:8px;text-align:center}
+.cfm-msg{font-size:14px;color:var(--text-muted);line-height:1.55;max-width:340px;margin:0 auto 22px;text-align:center}
+.cfm-actions{display:flex;gap:12px}
+.cfm-actions .btn{flex:1;justify-content:center}
+/* password input with show/hide */
+.pw-input{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;background:#fff;border:1px solid var(--input-border);border-radius:var(--r-control);transition:border-color .12s,box-shadow .12s}
+.pw-input:focus-within{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(31,67,151,.1)}
+.pw-input>svg{width:18px;height:18px;color:var(--text-muted);flex:0 0 auto}
+.pw-input input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-family:var(--font-base);font-size:14px;color:var(--text-strong)}
+.pw-input input::placeholder{color:var(--text-placeholder)}
+.pw-eye{cursor:pointer;color:var(--text-muted);display:flex;flex:0 0 auto}
+.pw-eye svg{width:18px;height:18px}
+.pw-err{font-size:12.5px;color:var(--status-error);margin-top:7px;min-height:1px}
+/* search palette */
+#searchModal{align-items:flex-start;padding:12px 32px 24px}
+#searchModal .modal{width:100%;max-width:none;height:auto;max-height:calc(100vh - 90px);border-radius:var(--r-container)}
+#searchModal .srch-inner{width:100%;display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.srch-head{display:flex;align-items:center;gap:12px;padding:17px 24px;border-bottom:1px solid var(--border-subtle)}
+.srch-head>svg{width:21px;height:21px;color:var(--text-muted);flex:0 0 auto}
+.srch-head input{flex:1;min-width:0;border:none;outline:none;font-family:var(--font-base);font-size:17px;color:var(--text-heading);background:transparent}
+.srch-head input::placeholder{color:var(--text-placeholder)}
+.srch-head .modal-x{flex:0 0 auto}
+.srch-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px}
+.srch-group{font-family:var(--font-bold);font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);padding:12px 12px 6px}
+.srch-item{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:11px;cursor:pointer}
+.srch-item:hover{background:#F2F6FF}
+.srch-ic{width:32px;height:32px;border-radius:9px;background:#EEF1FA;color:var(--brand-blue);display:grid;place-items:center;flex:0 0 auto}
+.srch-ic svg{width:16px;height:16px}
+.srch-name{flex:1;min-width:0;font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srch-empty{padding:30px 18px;text-align:center;color:var(--text-muted);font-size:14px}
+/* full-page search */
+.search-bar{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border-subtle);border-radius:var(--r-container);padding:0 22px;height:64px;box-shadow:var(--shadow-card);margin-bottom:24px;transition:border-color .12s,box-shadow .12s}
+.search-bar:focus-within{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(31,67,151,.1)}
+.search-bar>svg{width:22px;height:22px;color:var(--brand-blue);flex:0 0 auto}
+.search-bar input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--font-base);font-size:17px;color:var(--text-heading)}
+.search-bar input::placeholder{color:var(--text-placeholder)}
+#search .srch-recent-head{padding:2px 2px 10px}
+#search .srch-chips{padding:0 2px 20px}
+#search .srch-empty-state{margin:0;padding:70px 20px}
+#search .srch-group{padding:14px 2px 8px}
+#search .srch-item{padding:14px 12px}
+.srch-recent-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px}
+.srch-recent-title{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-bold);font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted)}
+.srch-recent-title svg{width:14px;height:14px}
+.srch-clear{color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;font-size:13px;cursor:pointer}
+.srch-clear:hover{text-decoration:underline}
+.srch-chips{display:flex;flex-wrap:wrap;gap:10px;padding:2px 12px 14px}
+.srch-recent-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border-subtle);border-radius:var(--r-pill);padding:8px 13px;font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading);cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.srch-recent-chip:hover{border-color:#c9d6f3;box-shadow:0 2px 8px rgba(16,33,80,.06)}
+.srch-recent-chip>svg{width:15px;height:15px;color:var(--brand-blue);flex:0 0 auto}
+.src-x{display:inline-flex;color:var(--text-muted);border-radius:50%;transition:color .12s}
+.src-x:hover{color:var(--status-error)}
+.src-x svg{width:14px;height:14px}
+.srch-empty-state{border:1.5px dashed #cdd6e6;border-radius:var(--r-container);background:#F8FAFD;margin:6px 12px 12px;padding:42px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px}
+.srch-empty-ic{width:56px;height:56px;border-radius:16px;background:#EEF1FA;color:var(--brand-blue);display:grid;place-items:center}
+.srch-empty-ic svg{width:26px;height:26px}
+.srch-empty-t{font-family:var(--font-bold);font-weight:700;font-size:17px;color:var(--text-heading)}
+.srch-empty-d{font-size:14px;color:var(--text-muted);max-width:400px;line-height:1.55}
+.btn-sm{height:38px;padding:0 14px;font-size:13px}
+.btn:disabled{background:#d0d5dd;border-color:#d0d5dd;color:#fff;cursor:not-allowed}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{background:#fff;border:1px solid var(--border-subtle);border-radius:var(--r-card);box-shadow:0 4px 18px rgba(31,67,151,.05);padding:20px 22px;display:flex;gap:16px;align-items:center}
+.stat .ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;flex:0 0 auto;background:#EEF1FA;color:var(--brand-blue)}
+.stat .ic svg{width:24px;height:24px}
+.stat .ic.green{background:#E8F5EA;color:var(--brand-green)}
+.stat .ic.amber{background:#FFF4E5;color:#B26A00}
+.stat .ic.red{background:#FDEAEA;color:#C62828}
+.stat .lab{font-family:var(--font-metric);font-weight:500;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--metric-label);margin-bottom:3px}
+.stat .val{font-family:var(--font-metric);font-weight:700;font-size:30px;line-height:1.05;color:var(--metric-value);display:flex;align-items:center;gap:6px}
+.stat .val svg{width:22px;height:22px;color:var(--status-pending)}
+.stat .valsm{font-size:20px}
+.stat .dl{font-family:var(--font-metric);font-weight:400;font-size:12px;color:var(--metric-muted);margin-top:4px}
+.stat .dl b{color:var(--brand-green);font-weight:600}
+
+/* filter row */
+.filterbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.filterbar .fl-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filterbar .flbl{font-family:var(--font-bold);font-weight:700;font-size:13px;color:var(--brand-blue)}
+.selwrap{position:relative;display:inline-flex;align-items:center}
+.selwrap .lead{position:absolute;left:14px;width:17px;height:17px;color:var(--brand-blue);pointer-events:none;opacity:.9}
+.selwrap .chev{position:absolute;right:12px;width:17px;height:17px;color:var(--brand-blue);pointer-events:none;transition:transform .15s}
+.selwrap:hover .chev{transform:translateY(1px)}
+.selwrap select{appearance:none;-webkit-appearance:none;height:44px;padding:0 38px 0 40px;border:1px solid var(--border-subtle);border-radius:var(--r-control);background:linear-gradient(180deg,#fff,#FBFCFE);font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading);cursor:pointer;box-shadow:0 1px 2px rgba(16,33,80,.05);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.selwrap select:hover{border-color:#c9d6f3;background:#fff}
+.selwrap select:focus{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(31,67,151,.12)}
+.filterbar .fcount{font-family:var(--font-metric);font-weight:700;font-size:14px;color:var(--metric-value)}
+/* custom dropdown */
+.csel{position:relative;display:inline-block}
+.csel-btn{height:44px;padding:0 14px 0 40px;border:1px solid var(--border-subtle);border-radius:var(--r-control);background:linear-gradient(180deg,#fff,#FBFCFE);font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading);cursor:pointer;box-shadow:0 1px 2px rgba(16,33,80,.05);outline:none;display:inline-flex;align-items:center;gap:8px;position:relative;transition:border-color .15s,box-shadow .15s,background .15s}
+.csel-btn:hover{border-color:#c9d6f3;background:#fff}
+.csel.open .csel-btn{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(31,67,151,.12)}
+.csel-lead{position:absolute;left:14px;width:17px;height:17px;color:var(--brand-blue)}
+.csel-chev{width:16px;height:16px;color:var(--brand-blue);margin-left:2px;transition:transform .15s}
+.csel.open .csel-chev{transform:rotate(180deg)}
+.csel-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:100%;max-height:320px;overflow:auto;background:#fff;border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-float);padding:6px;z-index:120;display:none}
+.csel-full{display:block}
+.csel-full .csel-btn{width:100%;height:44px;padding:0 14px;justify-content:space-between;font-family:var(--font-base);font-weight:500;font-size:14px;color:var(--text-strong)}
+.csel.open .csel-menu{display:block;animation:pop .14s ease}
+.csel-opt{display:flex;align-items:center;gap:8px;padding:10px 12px 10px 10px;border-radius:9px;font-size:14px;color:var(--text-strong);cursor:pointer;white-space:nowrap;font-family:var(--font-base)}
+.csel-opt:hover{background:#F2F6FF;color:var(--brand-blue)}
+.csel-opt.sel{background:#EAF1FE;color:var(--brand-blue);font-family:var(--font-bold);font-weight:700}
+.csel-check{width:16px;height:16px;display:grid;place-items:center;flex:0 0 auto;opacity:0;color:var(--brand-blue)}
+.csel-check svg{width:15px;height:15px}
+.csel-opt.sel .csel-check{opacity:1}
+
+/* charts */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.chart-h{font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--text-heading);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.chart-h svg{width:18px;height:18px;color:var(--brand-blue)}
+.barrow{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.barrow:last-child{margin-bottom:0}
+.barrow .bl{width:130px;font-size:13px;font-family:var(--font-base);color:var(--text-strong);text-align:right;flex:0 0 auto;font-weight:600}
+.barrow .bt{flex:1;display:block;height:32px;background:#EEF2F9;border-radius:10px;overflow:hidden}
+.barrow .bf{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#2a6bcf,var(--brand-blue));transition:width .5s ease}
+.barrow .bv{width:38px;text-align:left;font-family:var(--font-metric);font-weight:700;font-size:15px;color:var(--metric-value);flex:0 0 auto}
+.barrow{cursor:default;transition:background .12s;border-radius:8px;margin-left:-8px;margin-right:-8px;padding:2px 8px}
+.barrow:hover{background:#F6F8FD}
+.barrow:hover .bf{filter:brightness(1.08)}
+.charttip{position:fixed;z-index:200;background:#101828;color:#fff;font-family:var(--font-base);font-size:12.5px;font-weight:600;padding:7px 11px;border-radius:9px;box-shadow:0 8px 22px rgba(16,33,80,.32);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:nowrap}
+.charttip.show{opacity:1;transform:translateY(0)}
+.charttip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#101828}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:8px}
+.legend{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px 20px}
+.legend .li{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--text-strong);padding:6px 11px;border-radius:9px;transition:background .12s}
+.legend .li:hover{background:#F6F8FD}
+.legend .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+.legend .lc{margin-left:6px;font-family:var(--font-metric);font-weight:700;color:var(--metric-value)}
+.satnote{margin-top:16px;padding-top:14px;border-top:1px solid var(--border-subtle);font-size:13px;color:var(--text-muted)}
+.satnote b{color:var(--brand-green);font-family:var(--font-metric);font-weight:700}
+
+/* recent feedback */
+.feed-item{display:flex;gap:14px;padding:18px 22px;border-bottom:1px solid var(--border-subtle)}
+.feed-item:last-child{border-bottom:none}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2a6bcf,#16357d);color:#fff;display:grid;place-items:center;font-family:var(--font-bold);font-weight:700;font-size:14px;flex:0 0 auto}
+.feed-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px}
+.feed-name{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.feed-org{font-size:12px;color:var(--text-muted);margin-left:8px}
+.feed-txt{font-size:14px;color:var(--text-strong);margin-bottom:9px;line-height:1.5}
+.rstars{display:flex;gap:3px}
+.rstars svg{width:16px;height:16px}
+.card-head{padding:16px 22px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:var(--r-pill);font-family:var(--font-bold);font-weight:700;font-size:12px;white-space:nowrap}
+.badge svg{width:13px;height:13px}
+.badge .dot{width:8px;height:8px;border-radius:50%}
+.b-s{background:#E8F5EA;color:#2E7D34}.b-s .dot{background:var(--status-success)}
+.b-p{background:#FFF4E5;color:#B26A00}.b-p .dot{background:var(--status-pending)}
+.b-e{background:#FDEAEA;color:#C62828}.b-e .dot{background:var(--status-error)}
+.b-g{background:#EEF1F6;color:#5b6b86}.b-g .dot{background:#94a2bd}
+.b-blue{background:#E7EDFB;color:#23449b}.b-blue .dot{background:var(--brand-blue)}
+/* status pill with glowing dot */
+.stbadge{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:var(--r-pill);font-family:var(--font-bold);font-weight:700;font-size:12px;white-space:nowrap}
+.stbadge .sdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.st-active{background:#E8F5EA;color:#2E7D34}.st-active .sdot{background:var(--brand-green);box-shadow:0 0 0 3px rgba(57,162,72,.2)}
+.st-inactive{background:#F1F3F7;color:#5b6b86}.st-inactive .sdot{background:#94a2bd;box-shadow:0 0 0 3px rgba(148,162,189,.2)}
+/* clickable +more chip */
+.chip-more[onclick]{cursor:pointer;transition:background .12s,border-color .12s}
+.chip-more[onclick]:hover{background:#dbe7fd;border-color:#b9cdf7}
+/* list modal rows */
+.listrow{display:flex;align-items:center;gap:11px;padding:13px 10px;margin:0 -10px;border-radius:10px;border-bottom:1px solid var(--border-subtle);transition:background .12s}
+.listrow:last-child{border-bottom:none}
+.listrow:hover{background:#F6F8FD}
+.lr-name{flex:1;min-width:0;font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading)}
+.lr-num{width:24px;height:24px;border-radius:7px;background:#EEF2F9;color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;font-size:12px;display:grid;place-items:center;flex:0 0 auto}
+.chip-tag{display:inline-flex;align-items:center;gap:5px;background:#EAF1FE;border:1px solid #d3e0fb;color:var(--brand-blue);border-radius:8px;padding:4px 9px;font-family:var(--font-bold);font-weight:700;font-size:12px;white-space:nowrap}
+.chip-more{display:inline-flex;align-items:center;background:#EAF1FE;border:1px solid #d3e0fb;color:var(--brand-blue);border-radius:var(--r-pill);padding:4px 11px;font-family:var(--font-bold);font-weight:700;font-size:12px}
+.opt-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:4px 11px;background:#F2F5FB;color:#42506e;border-radius:var(--r-pill);border:1px solid #e3e9f4;line-height:1.35}
+
+/* tables */
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{text-align:left;padding:15px 20px;font-size:14px;vertical-align:middle}
+th{font-family:var(--font-bold);font-weight:700;background:#fff;color:var(--brand-blue);white-space:nowrap;border-bottom:1px solid var(--border-subtle)}
+th.tar,td.tar{text-align:right}
+tbody td{font-family:var(--font-base);color:#3a4660;border-bottom:1px solid var(--border-subtle)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:#F8FAFD}
+tbody tr:hover td{background:#EFF3FB}
+td .tt{font-family:var(--font-base);font-weight:600;color:var(--text-heading)}
+td .ds{font-size:12px;color:var(--text-muted);margin-top:3px}
+.mono{font-family:var(--font-base);font-size:12px;color:var(--text-muted)}
+.iconpill{width:34px;height:34px;border-radius:9px;border:1px solid var(--border-subtle);display:grid;place-items:center;background:#fff;cursor:pointer;color:var(--brand-blue)}
+.iconpill:hover{background:#F2F6FF;border-color:#c9d6f3}
+.iconpill.danger{color:var(--status-error)}
+.iconpill.danger:hover{background:#FDEAEA;border-color:#f5c2c2}
+.iconpill svg{width:16px;height:16px}
+.table-summary{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;color:var(--text-muted)}
+.table-summary b{color:var(--text-heading);font-family:var(--font-bold);font-weight:700}
+.empty{padding:48px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+/* table toolbar + pagination */
+.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-subtle);flex-wrap:wrap}
+.tsearch{position:relative;flex:1;max-width:360px;min-width:220px}
+.tsearch svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted)}
+.tsearch input{width:100%;height:42px;padding:0 14px 0 38px;border:1px solid var(--border-subtle);border-radius:var(--r-control);background:#F8FAFD;font-family:var(--font-base);font-size:14px;color:var(--text-strong);outline:none;transition:border-color .12s,background .12s,box-shadow .12s}
+.tsearch input::placeholder{color:var(--text-placeholder)}
+.tsearch input:focus{border-color:var(--brand-blue);background:#fff;box-shadow:0 0 0 3px rgba(31,67,151,.1)}
+.tcount{font-family:var(--font-metric);font-weight:700;font-size:13px;color:var(--metric-value)}
+.tfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--border-subtle);font-size:13px;color:var(--text-muted);flex-wrap:wrap}
+.tfoot b{color:var(--text-heading);font-family:var(--font-bold);font-weight:700}
+.pag{display:flex;gap:6px;align-items:center}
+.pag .pg{min-width:34px;height:34px;padding:0 8px;border-radius:9px;border:1px solid var(--border-subtle);display:grid;place-items:center;font-family:var(--font-num);font-weight:700;font-size:13px;background:#fff;color:var(--text-muted);cursor:pointer;transition:border-color .12s,color .12s,background .12s}
+.pag .pg:hover{border-color:#c9d6f3;color:var(--brand-blue)}
+.pag .pg.on{background:var(--brand-blue);color:#fff;border-color:var(--brand-blue)}
+.pag .pg.disabled{opacity:.4;pointer-events:none}
+.pag .pg svg{width:16px;height:16px}
+.b-num{background:#EAF1FE;color:#23449b}.b-num .dot{background:var(--brand-blue)}
+.b-txt{background:#EEF1F6;color:#5b6b86}.b-txt .dot{background:#94a2bd}
+.b-drop{background:#ECEAFD;color:#3B2BBF}.b-drop .dot{background:var(--status-info)}
+.b-bool{background:#E8F5EA;color:#2E7D34}.b-bool .dot{background:var(--status-success)}
+.b-date{background:#FFF4E5;color:#B26A00}.b-date .dot{background:var(--status-pending)}
+
+/* process flow */
+.flow{display:flex;align-items:center;justify-content:space-between}
+.flow-step{flex:1;text-align:center}
+.flow-ic{position:relative;width:62px;height:62px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(155deg,#2a6bcf,var(--brand-blue));display:grid;place-items:center;box-shadow:0 6px 16px rgba(31,67,151,.24)}
+.fs-num{position:absolute;top:-4px;right:-4px;width:23px;height:23px;border-radius:50%;background:#fff;border:2px solid var(--brand-blue);color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;font-size:11px;display:grid;place-items:center;box-shadow:0 2px 6px rgba(31,67,151,.2)}
+.flow-ic svg{width:26px;height:26px;color:#fff}
+.flow-step .fs-t{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.flow-step .fs-d{font-size:12px;color:var(--text-muted);margin-top:3px}
+.flow-conn{flex:0 0 auto;width:38px;height:2px;background:linear-gradient(90deg,#c9d6f3,#e2e8f0);margin:0 6px;margin-bottom:34px}
+
+/* info + api cards */
+.infobox{background:#EAF1FE;border:1px solid #cfdcfa;border-radius:var(--r-container);padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.infobox svg{width:20px;height:20px;color:var(--brand-blue);flex:0 0 auto;margin-top:1px}
+.infobox .it{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--brand-blue)}
+.infobox .id{font-size:12px;color:#3f5ba8;margin-top:3px}
+.apiitem{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--border-subtle);border-radius:var(--r-control);margin-bottom:10px;background:#fff;transition:border-color .12s,box-shadow .12s}
+.apiitem:hover{border-color:#c9d6f3;box-shadow:0 3px 10px rgba(16,33,80,.05)}
+.apiic{width:38px;height:38px;border-radius:10px;background:#EEF1FA;color:var(--brand-blue);display:grid;place-items:center;flex:0 0 auto}
+.apiic svg{width:19px;height:19px}
+.apitext{flex:1;min-width:0}
+.apiitem .at{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.apiitem .ad{font-size:12.5px;color:var(--text-muted);margin-top:2px}
+.endpoint{font-family:var(--font-bold);font-weight:700;font-size:11px;letter-spacing:.4px;color:var(--brand-blue);background:#EAF1FE;border:1px solid #d3e0fb;border-radius:7px;padding:4px 9px;flex:0 0 auto}
+.apitotal{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px;padding:16px 18px;border-radius:var(--r-control);background:linear-gradient(135deg,#1F4397,#2a6bcf);color:#fff;box-shadow:0 6px 18px rgba(31,67,151,.22)}
+.apitotal-l{font-family:var(--font-bold);font-weight:700;font-size:14px}
+.apitotal-s{font-size:12px;opacity:.85;margin-top:2px}
+.apitotal-v{font-family:var(--font-metric);font-weight:700;font-size:32px;line-height:1}
+/* responses filter stepper + empty state */
+.rsteps{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.rstep{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-bold);font-weight:700;font-size:12.5px;color:var(--text-muted);background:#F2F5FB;border:1px solid var(--border-subtle);border-radius:var(--r-pill);padding:6px 12px;transition:all .15s}
+.rstep .rn{width:18px;height:18px;border-radius:50%;background:#c8d0e0;color:#fff;display:grid;place-items:center;font-size:11px}
+.rstep .rn svg{width:11px;height:11px}
+.rstep.on{color:var(--brand-blue);background:#EAF1FE;border-color:#cddcfa}
+.rstep.on .rn{background:var(--brand-blue)}
+.rstep.done{color:var(--brand-green);background:#E8F5EA;border-color:#bfe4c6}
+.rstep.done .rn{background:var(--brand-green)}
+.rstep-sep{color:#c2c8d4;display:inline-flex}
+.rstep-sep svg{width:15px;height:15px}
+.rempty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:34px 18px;border:1.5px dashed #cdd6e6;border-radius:var(--r-container);background:#F8FAFD;margin-top:6px}
+.rempty-ic{width:50px;height:50px;border-radius:15px;background:#EEF1FA;color:var(--brand-blue);display:grid;place-items:center}
+.rempty-ic svg{width:23px;height:23px}
+.rempty-t{font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--text-heading)}
+.rempty-d{font-size:13px;color:var(--text-muted);max-width:340px;line-height:1.5}
+/* fit SyncTelemetry card to left column height with internal scroll */
+.rsync-card{display:flex;flex-direction:column;overflow:hidden}
+.rsync-card>.chart-h{flex:0 0 auto}
+.rsync-body{flex:1 1 auto;min-height:0;overflow-y:auto;margin:0 -6px;padding:0 6px}
+#rAlert .alertbox{margin-top:16px}
+
+/* validation steps */
+.vstep{display:flex;align-items:flex-start;gap:11px;padding:9px 0}
+.vstep svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
+.vstep .vpending{width:18px;height:18px;border:2px solid var(--border-subtle);border-radius:50%;flex:0 0 auto;margin-top:1px}
+.vstep.ok{color:var(--brand-green)}.vstep.err{color:var(--status-error)}.vstep.pending{color:var(--text-muted)}
+.vstep .vt{font-size:14px}
+.alertbox{border-radius:var(--r-container);padding:15px 18px;display:flex;gap:12px;align-items:flex-start}
+.alertbox svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
+.alert-ok{background:#E8F5EA;border:1px solid #b6e0bd;color:#2E7D34}
+.alert-err{background:#FDEAEA;border:1px solid #f5c2c2;color:#C62828}
+.alert-err .atitle{font-family:var(--font-bold);font-weight:700;margin-bottom:6px}
+.alert-err ul{margin:0;padding-left:16px;font-size:14px}
+
+/* form fields */
+.field{margin-bottom:18px}
+.field>label{display:block;font-family:var(--font-bold);font-weight:700;font-size:13px;color:var(--text-heading);margin-bottom:7px}
+.field label .req{color:var(--status-error)}
+.field label .typ{font-family:var(--font-base);font-weight:400;color:var(--text-muted);margin-left:6px}
+.inp{width:100%;height:44px;padding:0 14px;border:1px solid var(--input-border);border-radius:var(--r-control);background:#fff;font-family:var(--font-base);font-size:14px;color:var(--text-strong);outline:none;box-shadow:var(--shadow-xs)}
+.inp:focus{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(31,67,151,.1)}
+textarea.inp{height:auto;min-height:88px;padding:12px 14px;resize:vertical;line-height:1.5}
+select.inp{appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.inp[readonly],.inp:disabled{background:#F5F6F8;color:var(--text-muted);cursor:not-allowed}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.radio-row{display:flex;gap:24px;flex-wrap:wrap}
+.rlabel{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:14px;color:var(--text-strong);line-height:1}
+.rlabel input{accent-color:var(--brand-blue);width:17px;height:17px;flex:0 0 auto;margin:0}
+.checkrow{display:flex;align-items:center;gap:10px}
+.checkrow input{accent-color:var(--brand-blue);width:17px;height:17px;flex:0 0 auto;margin:0}
+.checkrow label{margin:0;font-size:14px;line-height:1;cursor:pointer}
+.switchrow{display:inline-flex;align-items:center;gap:11px;cursor:pointer;user-select:none}
+.switchrow input{position:absolute;opacity:0;width:0;height:0}
+.switch{width:42px;height:24px;border-radius:13px;background:#d0d5dd;position:relative;transition:background .15s;flex:0 0 auto}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switchrow input:checked+.switch{background:var(--brand-blue)}
+.switchrow input:checked+.switch::after{left:21px}
+.switch-label{font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading)}
+.attr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:260px;overflow-y:auto;border:1px solid var(--border-subtle);border-radius:var(--r-control);padding:12px;background:#F8FAFD}
+.attr-opt{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;cursor:pointer;border:1px solid var(--border-subtle);background:#fff;transition:border-color .12s,box-shadow .12s,background .12s}
+.attr-opt:hover{border-color:#c9d6f3}
+.attr-opt:has(input:checked){border-color:var(--brand-blue);background:#F5F8FF;box-shadow:0 0 0 1px var(--brand-blue) inset}
+.attr-opt input{accent-color:var(--brand-blue);width:17px;height:17px;flex:0 0 auto;margin:0;cursor:pointer}
+.ao-name{flex:1;min-width:0;font-family:var(--font-base);font-weight:600;font-size:14px;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ao-req{color:var(--status-error);margin-left:4px}
+.ao-badge{flex:0 0 auto;font-size:11px;padding:3px 9px}
+
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(16,33,80,.42);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;padding:24px;z-index:100}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:var(--r-card);box-shadow:0 40px 90px rgba(16,33,80,.28);width:100%;max-width:560px;max-height:calc(100vh - 48px);display:flex;flex-direction:column;overflow:hidden;animation:pop .16s ease}
+.modal.xl{max-width:720px}
+.modal .modal-body{overflow-y:auto}
+.modal-head{flex:0 0 auto}
+.mform{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;overflow:hidden}
+.mbody{padding:24px;overflow-y:auto;flex:1 1 auto;min-height:0}
+.mfoot{display:flex;gap:12px;padding:16px 24px;border-top:1px solid var(--border-subtle);flex:0 0 auto;background:#fff}
+.mfoot .btn{flex:1;justify-content:center}
+@keyframes pop{from{transform:translateY(10px) scale(.99);opacity:.6}to{transform:none;opacity:1}}
+.modal-head{padding:22px 24px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:linear-gradient(180deg,#FBFCFE,#fff)}
+.modal-head h3{font-family:var(--font-bold);font-weight:700;font-size:18px;color:var(--text-heading)}
+.mh-sub{display:block;font-family:var(--font-base);font-weight:400;font-size:13px;color:var(--text-muted);margin-top:4px}
+.optbox{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border:1px solid var(--border-subtle);border-radius:var(--r-control);background:#F8FAFD;cursor:pointer;transition:border-color .12s,background .12s;margin-bottom:2px}
+.optbox:hover{border-color:#bfe4c6;background:#F1FAF3}
+.optbox input{accent-color:var(--brand-green);width:17px;height:17px;margin-top:2px;flex:0 0 auto}
+.optbox .ot{display:block;font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.optbox .od{display:block;font-size:12.5px;color:var(--text-muted);margin-top:2px}
+.modal-x{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:var(--text-muted)}
+.modal-x:hover{background:#F2F6FF;color:var(--brand-blue)}
+.modal-body{padding:24px}
+.modal-foot{display:flex;gap:12px;padding-top:20px;margin-top:4px;border-top:1px solid var(--border-subtle)}
+.modal-foot .btn{flex:1;justify-content:center}
+
+/* notifications page */
+.notif{display:flex;gap:14px;padding:16px 22px;border-bottom:1px solid var(--border-subtle);transition:background .12s;cursor:pointer}
+.notif:last-child{border-bottom:none}
+.notif.unread{background:#F5F8FF}
+.notif:hover{background:#EFF3FB}
+.notif-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto}
+.notif-ic svg{width:20px;height:20px}
+.ni-blue{background:#EAF1FE;color:var(--brand-blue)}.ni-red{background:#FDEAEA;color:#C62828}.ni-green{background:#E8F5EA;color:#2E7D34}.ni-amber{background:#FFF4E5;color:#B26A00}
+.notif-body{flex:1;min-width:0}
+.notif-t{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.notif-d{font-size:13px;color:var(--text-muted);margin-top:2px;line-height:1.5}
+.notif-time{font-size:12px;color:var(--metric-muted);margin-top:6px;display:flex;align-items:center;gap:5px}
+.notif-time svg{width:13px;height:13px}
+.notif-dot{width:9px;height:9px;border-radius:50%;background:var(--brand-blue);flex:0 0 auto;margin-top:7px}
+/* help page */
+.help-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.help-card{background:#fff;border:1px solid var(--border-subtle);border-radius:var(--r-container);box-shadow:var(--shadow-card);padding:20px;cursor:pointer;transition:transform .13s,box-shadow .13s}
+.help-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(16,33,80,.1)}
+.help-ic{width:46px;height:46px;border-radius:13px;background:#EEF1FA;color:var(--brand-blue);display:grid;place-items:center;margin-bottom:12px}
+.help-ic svg{width:22px;height:22px}
+.help-card h4{font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--text-heading);margin-bottom:5px}
+.help-card p{font-size:13px;color:var(--text-muted);line-height:1.5}
+.help-card .hc-link{margin-top:11px;color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.help-card .hc-link svg{width:14px;height:14px;transition:transform .13s}
+.help-card:hover .hc-link svg{transform:translateX(3px)}
+.faq{border-bottom:1px solid var(--border-subtle)}
+.faq:last-child{border-bottom:none}
+.faq-q{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 2px;cursor:pointer;font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.faq-q svg{width:18px;height:18px;color:var(--text-muted);transition:transform .18s;flex:0 0 auto}
+.faq.open .faq-q svg{transform:rotate(180deg);color:var(--brand-blue)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .22s ease;font-size:13.5px;color:var(--text-muted);line-height:1.6}
+.faq.open .faq-a{max-height:240px;padding-bottom:16px}
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.contact-row{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid var(--border-subtle);border-radius:var(--r-control);background:#fff;transition:border-color .12s,box-shadow .12s}
+.contact-row:hover{border-color:#c9d6f3;box-shadow:0 3px 10px rgba(16,33,80,.05)}
+@media(max-width:820px){.contact-grid{grid-template-columns:1fr}}
+/* my profile */
+.prof-head{display:flex;align-items:center;gap:20px}
+.prof-avatar{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#2a6bcf,#16357d);color:#fff;display:grid;place-items:center;font-family:var(--font-bold);font-weight:700;font-size:26px;flex:0 0 auto;letter-spacing:.5px}
+.prof-name{font-family:var(--font-bold);font-weight:700;font-size:22px;color:var(--text-heading)}
+.prof-meta{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:11px;font-size:13px;color:var(--text-muted)}
+.prof-meta span{display:inline-flex;align-items:center;gap:6px}
+#profPhone{font-family:var(--font-num)}
+.prof-meta svg{width:15px;height:15px}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.prof-info{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}
+.pinfo-l{font-family:var(--font-bold);font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.pinfo-v{font-family:var(--font-base);font-weight:600;font-size:15px;color:var(--text-heading)}
+@media(max-width:720px){.prof-info{grid-template-columns:1fr}}
+.ep-photo{display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,#F8FAFD,#fff);border:1px solid var(--border-subtle);border-radius:var(--r-container);padding:16px 18px;margin-bottom:22px}
+.ep-avatar-wrap{position:relative;flex:0 0 auto}
+.ep-cam{position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:50%;background:var(--brand-blue);color:#fff;display:grid;place-items:center;border:2px solid #fff}
+.ep-cam svg{width:13px;height:13px}
+.ep-photo-t{font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--text-heading)}
+.ep-photo-d{font-size:13px;color:var(--text-muted);margin-top:3px}
+@media(max-width:560px){.ep-photo{flex-wrap:wrap}}
+.pref-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--border-subtle)}
+.pref-row:last-child{border-bottom:none}
+.pref-row .pt{font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading)}
+.pref-row .pd{font-size:13px;color:var(--text-muted);margin-top:3px;max-width:520px}
+.pref-row .switchrow input:checked+.switch{background:var(--brand-green)}
+@media(max-width:720px){.prof-grid{grid-template-columns:1fr}}
+/* login screen */
+#loginScreen{position:fixed;inset:0;z-index:200;background:#fff;display:none}
+#loginScreen.show{display:grid;grid-template-columns:1fr 1fr}
+.login-close{position:absolute;top:20px;right:24px;z-index:5;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(255,255,255,.16);transition:background .12s}
+.login-close:hover{background:rgba(255,255,255,.3)}
+.login-close svg{width:22px;height:22px}
+@media(max-width:900px){.login-close{color:var(--text-muted);background:#F2F4F8}.login-close:hover{background:#E7ECF3}}
+.login-left{display:flex;align-items:center;justify-content:center;padding:40px 32px;overflow-y:auto}
+.login-form{width:100%;max-width:440px}
+.login-h{font-family:var(--font-bold);font-weight:700;font-size:34px;color:var(--text-heading);letter-spacing:-.5px}
+.login-sub{color:var(--text-muted);font-size:15px;margin:8px 0 30px}
+.lg-field{margin-bottom:20px}
+.lg-field label{display:block;font-family:var(--font-bold);font-weight:700;font-size:14px;color:var(--text-heading);margin-bottom:9px}
+.lg-demo{font-family:var(--font-base);font-weight:400;color:var(--text-muted)}
+.lg-input{display:flex;align-items:center;gap:11px;height:54px;padding:0 16px;background:#F5F6F8;border:1.5px solid transparent;border-radius:12px;transition:border-color .12s,background .12s}
+.lg-input:focus-within{border-color:var(--brand-blue);background:#fff}
+.lg-input>svg{width:19px;height:19px;color:var(--text-muted);flex:0 0 auto}
+.lg-input input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-family:var(--font-base);font-size:15px;color:var(--text-strong)}
+.lg-input input::placeholder{color:var(--text-placeholder)}
+.lg-input select{flex:1;min-width:0;appearance:none;-webkit-appearance:none;border:none;background:transparent;outline:none;font-family:var(--font-bold);font-weight:700;font-size:15px;color:var(--text-heading);cursor:pointer}
+.lg-chev{width:18px;height:18px;color:var(--text-muted);flex:0 0 auto}
+.lg-eye{cursor:pointer;color:var(--text-muted);display:flex;flex:0 0 auto}
+.lg-eye svg{width:19px;height:19px}
+.lg-forgot{display:inline-block;color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;font-size:14px;cursor:pointer;margin-bottom:24px}
+.lg-btn{width:100%;height:54px;font-size:16px;justify-content:center;border-radius:12px}
+.lg-signup{text-align:center;margin-top:22px;color:var(--text-muted);font-size:14px}
+.lg-signup a{color:var(--brand-blue);font-family:var(--font-bold);font-weight:700;cursor:pointer}
+.login-right{position:relative;overflow:hidden;color:#fff;padding:60px 56px;display:flex;background:linear-gradient(145deg,#16357d 0%,#1F4397 45%,#2a6bcf 100%)}
+.login-right::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:24px 24px;opacity:.5}
+.login-right::after{content:'';position:absolute;width:340px;height:340px;border-radius:50%;top:-90px;right:-70px;background:radial-gradient(circle,rgba(57,162,72,.45),transparent 70%);filter:blur(8px)}
+.lg-right-inner{position:relative;z-index:1;width:100%}
+.login-right h2{font-family:var(--font-bold);font-weight:700;font-size:36px;line-height:1.2;letter-spacing:-.5px}
+.login-right p{font-size:15px;opacity:.9;margin-top:14px;max-width:420px;line-height:1.6}
+.lg-canvas{position:relative;margin-top:46px;height:420px}
+.lg-chips{display:flex;flex-direction:column;gap:14px;position:absolute;top:8px;left:0;z-index:2}
+.lg-chip{display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--text-heading);font-family:var(--font-bold);font-weight:700;font-size:14px;padding:11px 16px;border-radius:11px;box-shadow:0 10px 26px rgba(16,33,80,.22);width:fit-content}
+.lg-chip svg{width:16px;height:16px;color:var(--brand-blue)}
+.lg-mock{position:absolute;top:44px;right:0;width:340px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(16,33,80,.32);padding:22px;display:flex;flex-direction:column}
+.lg-mock-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.lg-dot{width:12px;height:12px;border-radius:50%;background:var(--brand-green);flex:0 0 auto}
+.sk{display:block;background:#E7ECF5;border-radius:6px}
+.lg-drop{margin-top:18px;border:1.5px dashed #cdd6e6;border-radius:11px;padding:16px;display:flex;align-items:center;justify-content:center;gap:7px;color:var(--text-muted);font-family:var(--font-bold);font-weight:700;font-size:13px}
+.lg-drop svg{width:15px;height:15px}
+.lg-mock-submit{margin-top:18px;height:46px;border:none;border-radius:11px;background:var(--brand-green);color:#fff;font-family:var(--font-bold);font-weight:700;font-size:15px;cursor:pointer}
+@media(max-width:900px){#loginScreen.show{grid-template-columns:1fr}.login-right{display:none}}
+.navtoggle{display:none}
+@media(max-width:1080px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .two{grid-template-columns:1fr}
+  .help-grid{grid-template-columns:repeat(2,1fr)}
+  .navtoggle{display:grid}
+  .nav{display:none;position:absolute;top:calc(100% + 10px);left:0;right:auto;transform:none;flex-direction:column;align-items:stretch;gap:2px;background:#fff;border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-float);padding:8px;min-width:214px;z-index:65}
+  .nav.open{display:flex}
+  .nav a{padding:11px 14px;border-radius:9px;font-size:13px}
+  .nav a::after{display:none}
+  .nav a.active{background:#EAF1FE}
+  .nav a:not(.active):hover{background:#F2F6FF}
+}
+@media(max-width:820px){
+  h1.title{font-size:20px}
+  .flow{overflow-x:auto}.flow-step{min-width:110px}
+  .modal-back{padding:16px}
+  .cfm-actions{flex-direction:column}
+}
+@media(max-width:720px){
+  .topbar{margin:10px 12px 0;padding:11px 14px}
+  .topbar-right{gap:8px}
+  #searchModal{padding:10px 12px 20px}
+  .page{padding:18px 14px 60px}
+  .stats{grid-template-columns:1fr}
+  .grid2,.attr-grid{grid-template-columns:1fr}
+  .help-grid{grid-template-columns:1fr}
+  .profile .pinfo,.profile .psort{display:none}
+  .page-head .btn{width:100%}
+  .filterbar .fl-left{width:100%}.selwrap,.csel{flex:1}
+  .prof-head{flex-wrap:wrap}
+  .rsteps{gap:6px}.rstep{padding:6px 10px;font-size:11.5px}
+  .mfoot .btn,.mfoot{flex-wrap:wrap}
+}
+@media(max-width:520px){
+  .topbar-right .ico[title="Help"]{display:none}
+  .login-h{font-size:28px}.login-left{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="flex ac g16">
+    <span class="ico navtoggle" onclick="toggleNav(event)" title="Menu"><i data-lucide="menu"></i></span>
+    <span class="logo">
+      <span class="mark">TOS</span>
+      <span class="ltxt"><span class="l1">Telemetry<span class="i">OS</span></span></span>
+    </span>
+    <nav class="nav" id="nav">
+      <a data-tab="overview" class="active">Overview</a>
+      <a data-tab="attributes">Attributes</a>
+      <a data-tab="forms">Forms</a>
+      <a data-tab="responses">Responses</a>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <span class="ico" onclick="openSearch()" title="Search"><i data-lucide="search"></i></span>
+    <span class="ico" onclick="switchTab('notifications')" title="Notifications"><i data-lucide="bell"></i><span class="dot" id="notifBadge">2</span></span>
+    <span class="ico" onclick="switchTab('help')" title="Help"><i data-lucide="help-circle"></i></span>
+    <span class="tbdiv"></span>
+    <span class="profile" onclick="toggleProfileMenu(event)"><span class="pavatar">AM</span><span class="pinfo"><span class="pn">Admin User</span><span class="pr">Platform Admin</span></span><i class="psort" data-lucide="chevron-down"></i>
+      <div class="profmenu" id="profMenu">
+        <div class="pmi" onclick="openProfile()"><i data-lucide="user"></i> My Profile</div>
+        <div class="pmi" onclick="openPwd()"><i data-lucide="key-round"></i> Change Password</div>
+        <div class="pmdiv"></div>
+        <div class="pmi danger" onclick="logout()"><i data-lucide="log-out"></i> Logout</div>
+      </div>
+    </span>
+  </div>
+</header>
+
+<div class="stage">
+
+<!-- ============ OVERVIEW ============ -->
+<section class="screen show" id="overview">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Telemetry Overview</h1>
+        <div class="sub">Live insights across every tool and organization feeding the telemetry service.</div>
+      </div>
+    </div>
+
+    <div class="filterbar">
+      <div class="fl-left">
+        <div class="csel" id="cselOrg"></div>
+        <div class="csel" id="cselTool"></div>
+        <div class="csel" id="cselTime"></div>
+      </div>
+      <div class="fcount" id="ovCount">0 submissions</div>
+    </div>
+
+    <div class="stats" id="ovStats"></div>
+
+    <div class="two mt22">
+      <div class="card pad">
+        <div class="chart-h">Avg rating by tool</div>
+        <div id="ovBars"></div>
+      </div>
+      <div class="card pad">
+        <div class="chart-h">Sentiment breakdown</div>
+        <div class="donut-wrap">
+          <div id="ovDonut"></div>
+          <div class="legend" id="ovLegend"></div>
+        </div>
+        <div class="satnote" id="ovSat"></div>
+      </div>
+    </div>
+
+    <div class="card mt22">
+      <div class="card-head"><span class="section-title">Recent Feedback</span></div>
+      <div id="ovFeed"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ATTRIBUTES ============ -->
+<section class="screen" id="attributes">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Attribute Management</h1>
+        <div class="sub">Create and manage reusable attributes for telemetry forms.</div>
+      </div>
+      <button class="btn btn-primary" onclick="openAttrModal()"><i data-lucide="plus"></i> New Attribute</button>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div class="toolbar">
+        <div class="tsearch"><i data-lucide="search"></i><input id="attrSearchInp" placeholder="Search attributes by name or type…" oninput="attrSearch(this.value)"></div>
+        <span class="tcount" id="attrCount"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="min-width:820px">
+          <thead><tr><th>Attribute Name</th><th>Type</th><th>Options</th><th>Required</th><th class="tar">Actions</th></tr></thead>
+          <tbody id="attrRows"></tbody>
+        </table>
+      </div>
+      <div class="tfoot" id="attrFoot"></div>
+    </div>
+    <div class="table-summary" id="attrSummary"></div>
+  </div>
+</section>
+
+<!-- ============ FORMS ============ -->
+<section class="screen" id="forms">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Form Builder</h1>
+        <div class="sub">Compose telemetry forms by binding attributes to a tool or organization program.</div>
+      </div>
+      <button class="btn btn-primary" onclick="openFormModal()"><i data-lucide="plus"></i> New Form</button>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div class="toolbar">
+        <div class="tsearch"><i data-lucide="search"></i><input id="formSearchInp" placeholder="Search forms by name, tool or organization…" oninput="formSearch(this.value)"></div>
+        <span class="tcount" id="formCount"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="min-width:980px">
+          <thead><tr><th>Form Name</th><th>Context Type</th><th>Context Value</th><th>Attributes</th><th>Status</th><th class="tar">Actions</th></tr></thead>
+          <tbody id="formRows"></tbody>
+        </table>
+      </div>
+      <div class="tfoot" id="formFoot"></div>
+    </div>
+    <div class="table-summary" id="formSummary"></div>
+  </div>
+</section>
+
+<!-- ============ RESPONSES ============ -->
+<section class="screen" id="responses">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Telemetry Data Submission</h1>
+        <div class="sub">Submit and validate telemetry data via the SyncTelemetry API.</div>
+      </div>
+    </div>
+
+    <div class="two mt22" style="align-items:stretch">
+      <!-- Left column: Data Flow Process + API Information -->
+      <div>
+        <div class="card pad">
+          <div class="chart-h"><i data-lucide="workflow"></i> Data Flow Process</div>
+          <div class="flow">
+            <div class="flow-step"><div class="flow-ic"><span class="fs-num">1</span><i data-lucide="send"></i></div><div class="fs-t">Submit Data</div><div class="fs-d">SyncTelemetry API</div></div>
+            <div class="flow-conn"></div>
+            <div class="flow-step"><div class="flow-ic"><span class="fs-num">2</span><i data-lucide="file-check"></i></div><div class="fs-t">Validate Data</div><div class="fs-d">Form, Attributes, Types</div></div>
+            <div class="flow-conn"></div>
+            <div class="flow-step"><div class="flow-ic"><span class="fs-num">3</span><i data-lucide="database"></i></div><div class="fs-t">Store Data</div><div class="fs-d">Telemetry Database</div></div>
+            <div class="flow-conn"></div>
+            <div class="flow-step"><div class="flow-ic"><span class="fs-num">4</span><i data-lucide="trending-up"></i></div><div class="fs-t">Analytics</div><div class="fs-d">Insights &amp; Reports</div></div>
+          </div>
+        </div>
+        <div class="card pad mt16">
+          <div class="chart-h"><i data-lucide="plug"></i> API Information</div>
+          <div class="apiitem"><span class="apiic"><i data-lucide="upload-cloud"></i></span><div class="apitext"><div class="at">SyncTelemetryData API</div><div class="ad">Submits telemetry data with form ID, user ID, and attribute values.</div></div><span class="endpoint">POST</span></div>
+          <div class="apiitem"><span class="apiic"><i data-lucide="download-cloud"></i></span><div class="apitext"><div class="at">FormData Retrieval API</div><div class="ad">Retrieves submitted data for analysis and reporting.</div></div><span class="endpoint">GET</span></div>
+          <div class="apitotal"><div><div class="apitotal-l">Total Submissions</div><div class="apitotal-s">Stored in telemetry database</div></div><div class="apitotal-v" id="rTotal">0</div></div>
+        </div>
+      </div>
+
+      <!-- Right column: SyncTelemetry API · View Submitted Data -->
+      <div style="display:flex;flex-direction:column">
+        <div class="card pad rsync-card">
+          <div class="chart-h"><i data-lucide="sliders-horizontal"></i> SyncTelemetry API · View Submitted Data</div>
+          <div class="rsync-body">
+          <div class="rsteps">
+            <span class="rstep on" id="rStep1"><span class="rn">1</span> Form</span>
+            <span class="rstep-sep"><i data-lucide="chevron-right"></i></span>
+            <span class="rstep" id="rStep2"><span class="rn">2</span> User</span>
+            <span class="rstep-sep"><i data-lucide="chevron-right"></i></span>
+            <span class="rstep" id="rStep3"><span class="rn">3</span> Submission</span>
+          </div>
+          <div class="field">
+            <label>Select Form <span class="req">*</span></label>
+            <select class="inp" id="rForm" onchange="onRForm()"><option value="">Choose a form…</option></select>
+          </div>
+          <div class="field" id="rUserWrap" style="display:none">
+            <label>Select User / System ID <span class="req">*</span></label>
+            <select class="inp" id="rUser" onchange="onRUser()"></select>
+            <div class="ds" id="rUserHint" style="margin-top:6px"></div>
+          </div>
+          <div class="field" id="rSubWrap" style="display:none">
+            <label>Select Submission <span class="req">*</span></label>
+            <select class="inp" id="rSub" onchange="onRSub()"></select>
+            <div class="ds" id="rSubHint" style="margin-top:6px"></div>
+          </div>
+          <div class="rempty" id="rEmpty">
+            <div class="rempty-ic"><i data-lucide="mouse-pointer-click"></i></div>
+            <div class="rempty-t">No submission selected</div>
+            <div class="rempty-d">Choose a form, user, and submission above to preview the stored telemetry values.</div>
+          </div>
+          <div id="rFields"></div>
+          <div class="modal-foot" id="rActions" style="display:none">
+            <button class="btn btn-ghost" onclick="resetResponses()">Reset Filters</button>
+            <button class="btn btn-primary" onclick="storeData()"><i data-lucide="database"></i> <span id="rStoreLbl">Store Data</span></button>
+          </div>
+          </div>
+        </div>
+        <div class="card pad mt16" id="rValidWrap" style="display:none">
+          <div class="chart-h">Validation Process</div>
+          <div id="rValid"></div>
+        </div>
+        <div id="rAlert"></div>
+      </div>
+    </div>
+
+    <div class="card mt22" style="overflow:hidden">
+      <div class="card-head"><span class="section-title">Recent Submissions · FormData API</span><span class="tcount" id="rSubCount"></span></div>
+      <div style="overflow-x:auto">
+        <table style="min-width:920px">
+          <thead><tr><th>Submission ID</th><th>User / System ID</th><th>Form</th><th>Data</th><th>Submitted At</th></tr></thead>
+          <tbody id="rSubRows"></tbody>
+        </table>
+      </div>
+      <div class="tfoot" id="rSubFoot"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NOTIFICATIONS ============ -->
+<section class="screen" id="notifications">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Notifications</h1>
+        <div class="sub">Recent activity across your telemetry service.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="markAllRead()"><i data-lucide="check-check"></i> Mark all as read</button>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div id="notifList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HELP ============ -->
+<section class="screen" id="help">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Help &amp; Support</h1>
+        <div class="sub">Guides, answers, and ways to reach the TelemetryOS team.</div>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <div class="chart-h"><i data-lucide="life-buoy"></i> Contact support</div>
+      <div class="contact-grid">
+        <div class="contact-row"><span class="apiic"><i data-lucide="mail"></i></span><div class="apitext"><div class="at">Email us</div><div class="ad">support@telemetryos.io · replies within 24h</div></div></div>
+        <div class="contact-row"><span class="apiic"><i data-lucide="message-circle"></i></span><div class="apitext"><div class="at">Live chat</div><div class="ad">Mon–Fri, 9am–6pm IST</div></div></div>
+        <div class="contact-row"><span class="apiic"><i data-lucide="book-open"></i></span><div class="apitext"><div class="at">Documentation</div><div class="ad">Guides, API reference and examples</div></div></div>
+      </div>
+    </div>
+
+    <div class="card pad mt22">
+      <div class="chart-h"><i data-lucide="help-circle"></i> Frequently asked questions</div>
+      <div id="faqList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SEARCH ============ -->
+<section class="screen" id="search">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">Search</h1>
+        <div class="sub">Find attributes, forms and responses across TelemetryOS.</div>
+      </div>
+    </div>
+    <div class="search-bar"><i data-lucide="search"></i><input id="globalSearch" placeholder="Search forms, attributes, tools or keywords…" autocomplete="off" oninput="runSearch(this.value)"></div>
+    <div id="searchResults"></div>
+  </div>
+</section>
+
+<!-- ============ MY PROFILE ============ -->
+<section class="screen" id="profile">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="title">My Profile</h1>
+        <div class="sub">Manage your account details and preferences.</div>
+      </div>
+    </div>
+
+    <div class="card pad prof-head">
+      <div class="prof-avatar" id="profAvatar">AM</div>
+      <div style="flex:1;min-width:0">
+        <div class="prof-name" id="profName">Admin User</div>
+        <div class="mt8"><span class="badge b-blue"><i data-lucide="shield"></i> <span id="profRole">Platform Admin</span></span></div>
+        <div class="prof-meta"><span><i data-lucide="mail"></i> <span id="profEmail">admin@telemetryos.io</span></span><span><i data-lucide="phone"></i> <span id="profPhone">+91 98765 43210</span></span><span><i data-lucide="map-pin"></i> <span id="profLocation">Bengaluru, India</span></span></div>
+      </div>
+      <span class="iconpill" onclick="openEditProfile()" title="Edit profile" style="align-self:flex-start"><i data-lucide="pencil"></i></span>
+    </div>
+
+    <div class="card pad mt22">
+      <div class="chart-h"><i data-lucide="sliders-horizontal"></i> Preferences</div>
+      <div class="pref-row"><div><div class="pt">Email notifications</div><div class="pd">Get notified about new submissions and validation errors.</div></div><label class="switchrow"><input type="checkbox" id="prefEmail" checked><span class="switch"></span></label></div>
+      <div class="pref-row"><div><div class="pt">Weekly summary report</div><div class="pd">Receive a telemetry insights digest every Monday.</div></div><label class="switchrow"><input type="checkbox" id="prefWeekly" checked><span class="switch"></span></label></div>
+      <div class="pref-row"><div><div class="pt">Product updates</div><div class="pd">Occasional emails about new TelemetryOS features.</div></div><label class="switchrow"><input type="checkbox" id="prefProduct"><span class="switch"></span></label></div>
+    </div>
+
+    <div class="flex" style="justify-content:flex-end;gap:12px;margin-top:22px">
+      <button class="btn btn-ghost" onclick="cancelPrefs()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePrefs()"><i data-lucide="check"></i> Save changes</button>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ===== Attribute Modal ===== -->
+<div class="modal-back" id="attrModal">
+  <div class="modal">
+    <div class="modal-head"><div class="mh-title"><div><h3 id="attrModalTitle">Create New Attribute</h3><span class="mh-sub">Define a reusable field for your telemetry forms</span></div></div><span class="modal-x" onclick="closeAttrModal()"><i data-lucide="x"></i></span></div>
+    <form onsubmit="saveAttr(event)" class="mform">
+      <div class="mbody">
+        <div class="grid2">
+          <div class="field"><label>Attribute Name <span class="req">*</span></label>
+            <input class="inp" id="amName" placeholder="e.g., Status, Quantity, API Fetched" required></div>
+          <div class="field"><label>Attribute Type <span class="req">*</span></label>
+            <div class="csel csel-full" id="amType"></div></div>
+        </div>
+        <div class="field" id="amOptWrap" style="display:none"><label>Dropdown Options <span class="typ">comma-separated</span></label>
+          <input class="inp" id="amOptions" placeholder="e.g., Option 1, Option 2, Option 3"></div>
+        <label class="switchrow"><input type="checkbox" id="amReq"><span class="switch"></span><span class="switch-label">Required field</span></label>
+      </div>
+      <div class="mfoot">
+        <button type="button" class="btn btn-ghost" onclick="closeAttrModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="amSubmit"><i data-lucide="check"></i> <span id="amSubmitLbl">Create Attribute</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Form Modal ===== -->
+<div class="modal-back" id="formModal">
+  <div class="modal xl">
+    <div class="modal-head"><div class="mh-title"><div><h3 id="formModalTitle">Create New Form</h3><span class="mh-sub">Bind attributes to a tool or organization program</span></div></div><span class="modal-x" onclick="closeFormModal()"><i data-lucide="x"></i></span></div>
+    <form onsubmit="saveForm(event)" class="mform">
+      <div class="mbody">
+        <div class="grid2">
+          <div class="field"><label>Form Name <span class="req">*</span></label>
+            <input class="inp" id="fmName" placeholder="e.g., User Activity Form" required></div>
+          <div class="field"><label>Status</label>
+            <div class="csel csel-full" id="fmStatus"></div></div>
+        </div>
+        <div class="field"><label>Description</label>
+          <textarea class="inp" id="fmDesc" placeholder="Describe the purpose of this form"></textarea></div>
+        <div class="field"><label>Context Type <span class="req">*</span></label>
+          <div class="radio-row">
+            <label class="rlabel"><input type="radio" name="fmCtx" value="Tool" checked onchange="toggleFmCtx()"><span>Tool</span></label>
+            <label class="rlabel"><input type="radio" name="fmCtx" value="Organization-Program" onchange="toggleFmCtx()"><span>Organization-Program</span></label>
+          </div>
+        </div>
+        <div id="fmToolWrap" class="field"><label>Tool Name <span class="req">*</span></label>
+          <input class="inp" id="fmTool" placeholder="e.g., Analytics Dashboard, Monitoring Tool"></div>
+        <div id="fmOrgWrap" class="grid2" style="display:none">
+          <div class="field"><label>Organization Name <span class="req">*</span></label>
+            <input class="inp" id="fmOrg" placeholder="e.g., Marketing Dept"></div>
+          <div class="field"><label>Program Name <span class="req">*</span></label>
+            <input class="inp" id="fmProg" placeholder="e.g., Q2 Campaign"></div>
+        </div>
+        <div class="field"><label>Select Attributes <span class="req">*</span> <span class="typ" id="fmAttrCount">(0 selected)</span></label>
+          <div class="attr-grid" id="fmAttrs"></div>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button type="button" class="btn btn-ghost" onclick="closeFormModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="fmSubmit"><i data-lucide="check"></i> <span id="fmSubmitLbl">Create Form</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Edit Profile Modal ===== -->
+<div class="modal-back" id="editProfileModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head"><div class="mh-title"><div><h3>Edit Profile</h3><span class="mh-sub">Update your account details</span></div></div><span class="modal-x" onclick="closeEditProfile()"><i data-lucide="x"></i></span></div>
+    <form class="mform" onsubmit="saveEditProfile(event)">
+      <div class="mbody">
+        <div class="ep-photo">
+          <div class="ep-avatar-wrap">
+            <div class="prof-avatar" id="epAvatar" style="width:64px;height:64px;font-size:22px">AM</div>
+            <span class="ep-cam"><i data-lucide="camera"></i></span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="ep-photo-t">Profile photo</div>
+            <div class="ep-photo-d">Upload an image, or your initials are used automatically.</div>
+          </div>
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('epPhotoInput').click()"><i data-lucide="upload"></i> Upload</button>
+          <input type="file" id="epPhotoInput" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Full name</label><input class="inp" id="epName"></div>
+          <div class="field"><label>Email</label><input class="inp" type="email" id="epEmail"></div>
+          <div class="field"><label>Phone</label><input class="inp" id="epPhone"></div>
+          <div class="field"><label>Location</label><input class="inp" id="epLocation"></div>
+          <div class="field"><label>Role</label><div class="csel csel-full" id="epRole"></div></div>
+          <div class="field"><label>Timezone</label><div class="csel csel-full" id="epTimezone"></div></div>
+        </div>
+        <div class="field" style="margin-bottom:0"><label>Organization</label><input class="inp" id="epOrg"></div>
+      </div>
+      <div class="mfoot">
+        <button type="button" class="btn btn-ghost" onclick="closeEditProfile()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Change Password Modal ===== -->
+<div class="modal-back" id="pwdModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><div class="mh-title"><div><h3>Change Password</h3><span class="mh-sub">Enter your current password and choose a new one</span></div></div><span class="modal-x" onclick="closePwd()"><i data-lucide="x"></i></span></div>
+    <form class="mform" onsubmit="submitPwd(event)">
+      <div class="mbody">
+        <div class="field"><label>Current Password</label>
+          <div class="pw-input"><i data-lucide="lock"></i><input type="password" id="pwCurrent" placeholder="Enter current password" oninput="validatePw()"><span class="pw-eye" onclick="togglePwField(this)"><i data-lucide="eye-off"></i></span></div></div>
+        <div class="field"><label>New Password</label>
+          <div class="pw-input"><i data-lucide="lock"></i><input type="password" id="pwNew" placeholder="Enter new password" oninput="validatePw()"><span class="pw-eye" onclick="togglePwField(this)"><i data-lucide="eye-off"></i></span></div></div>
+        <div class="field" style="margin-bottom:0"><label>Confirm New Password</label>
+          <div class="pw-input"><i data-lucide="lock"></i><input type="password" id="pwConfirm" placeholder="Re-enter new password" oninput="validatePw()"><span class="pw-eye" onclick="togglePwField(this)"><i data-lucide="eye-off"></i></span></div>
+          <div class="pw-err" id="pwErr"></div></div>
+      </div>
+      <div class="mfoot" style="justify-content:flex-end">
+        <button type="button" class="btn btn-ghost" style="flex:0 0 auto" onclick="closePwd()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:0 0 auto" id="pwdSubmit" disabled><i data-lucide="check"></i> Update Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Confirm Delete Modal ===== -->
+<div class="modal-back" id="confirmModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-body">
+      <div class="cfm-ic"><i data-lucide="trash-2"></i></div>
+      <h3 id="cfmTitle">Delete form?</h3>
+      <p class="cfm-msg" id="cfmMsg">Are you sure you want to delete this form? This action cannot be undone.</p>
+      <div class="cfm-actions">
+        <button class="btn btn-ghost" onclick="closeConfirm()">No</button>
+        <button class="btn btn-danger" onclick="confirmYes()"><i data-lucide="trash-2"></i> Yes, delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== List Modal (used by "+N more") ===== -->
+<div class="modal-back" id="listModal">
+  <div class="modal">
+    <div class="modal-head"><div class="mh-title"><div><h3 id="listModalTitle">Details</h3><span class="mh-sub" id="listModalSub"></span></div></div><span class="modal-x" onclick="closeListModal()"><i data-lucide="x"></i></span></div>
+    <div class="modal-body"><div id="listModalBody"></div></div>
+  </div>
+</div>
+
+<!-- ===== Login Screen ===== -->
+<div id="loginScreen">
+  <span class="login-close" onclick="closeLogin()" title="Close"><i data-lucide="x"></i></span>
+  <div class="login-left">
+    <div class="login-form">
+      <span class="logo" style="margin-bottom:34px"><span class="mark">TOS</span><span class="ltxt"><span class="l1">Telemetry<span class="i">OS</span></span></span></span>
+      <h1 class="login-h">Welcome back! <span style="font-family:sans-serif">👋</span></h1>
+      <div class="login-sub">Please login to access your account.</div>
+      <div class="lg-field">
+        <label>Email Address</label>
+        <div class="lg-input"><i data-lucide="mail"></i><input type="email" placeholder="Type your email"></div>
+      </div>
+      <div class="lg-field">
+        <label>Password</label>
+        <div class="lg-input"><i data-lucide="lock"></i><input type="password" placeholder="Type your password"><span class="lg-eye" onclick="toggleLoginPw(this)"><i data-lucide="eye-off"></i></span></div>
+      </div>
+      <a class="lg-forgot">Forgot Password?</a>
+      <button class="btn btn-primary lg-btn" onclick="doLogin()">Log In</button>
+      <div class="lg-signup">Don't have an account? <a>Sign Up</a></div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="lg-right-inner">
+      <h2>Manage your telemetry,<br>seamlessly.</h2>
+      <p>Log in to build forms, capture telemetry data, and turn every submission into insights with ease.</p>
+      <div class="lg-canvas">
+        <div class="lg-chips">
+          <span class="lg-chip"><i data-lucide="type"></i> Short Text</span>
+          <span class="lg-chip"><i data-lucide="calendar"></i> Date</span>
+          <span class="lg-chip"><i data-lucide="chevron-down"></i> Dropdown</span>
+        </div>
+        <div class="lg-mock">
+          <div class="lg-mock-top"><span class="lg-dot"></span><span class="sk" style="width:120px;height:8px"></span></div>
+          <span class="sk" style="width:90px;height:8px;margin-top:16px"></span>
+          <span class="sk" style="height:38px;margin-top:8px;border-radius:9px"></span>
+          <span class="sk" style="width:110px;height:8px;margin-top:16px"></span>
+          <span class="sk" style="height:38px;margin-top:8px;border-radius:9px"></span>
+          <div class="lg-drop"><i data-lucide="plus"></i> Drop field here</div>
+          <button class="lg-mock-submit">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+/* ============ Data store (ported from telemetryService) ============ */
+var attributes=[],forms=[],submissions=[];
+function uid(p){return p+'_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
+function createAttribute(a){var n=Object.assign({},a,{id:uid('attr'),createdAt:new Date()});attributes.push(n);return n;}
+function createForm(f){var now=new Date();var n=Object.assign({},f,{id:uid('form'),createdAt:now,updatedAt:now});forms.push(n);return n;}
+function getFormById(id){return forms.find(function(f){return f.id===id;});}
+function getAttrById(id){return attributes.find(function(a){return a.id===id;});}
+function validate(form,data){
+  var errs=[];
+  if(form.status!=='Active'){errs.push({field:'form',message:'Form is not active'});return errs;}
+  var fa=form.attributes.map(getAttrById).filter(Boolean);
+  fa.forEach(function(attr){if(attr.required){var e=data.find(function(d){return d.attributeId===attr.id;});if(!e||e.value===undefined||e.value===''){errs.push({field:attr.name,message:attr.name+' is required'});}}});
+  data.forEach(function(entry){var attr=fa.find(function(a){return a.id===entry.attributeId;});if(!attr){errs.push({field:entry.attributeId,message:'Attribute does not belong to this form'});return;}
+    if(attr.type==='Number'&&typeof entry.value!=='number'&&isNaN(Number(entry.value)))errs.push({field:attr.name,message:attr.name+' must be a number'});
+    if(attr.type==='Dropdown'&&attr.options&&attr.options.indexOf(String(entry.value))<0)errs.push({field:attr.name,message:attr.name+' must be one of: '+attr.options.join(', ')});
+  });
+  return errs;
+}
+function syncTelemetryData(formId,userId,data){
+  var form=getFormById(formId);
+  if(!form)return{success:false,errors:[{field:'form',message:'Form not found'}]};
+  var errs=validate(form,data);
+  if(errs.length)return{success:false,errors:errs};
+  var sub={id:uid('sub'),formId:formId,userId:userId,data:data,submittedAt:new Date()};
+  submissions.push(sub);return{success:true,submission:sub};
+}
+
+/* sample data */
+var A={};
+function initSample(){
+  A.status=createAttribute({name:'Status',type:'Dropdown',options:['Success','Failed','Pending','In Progress'],required:true});
+  A.qty=createAttribute({name:'Quantity',type:'Number',required:true});
+  A.api=createAttribute({name:'API Fetched',type:'Text',required:false});
+  A.remarks=createAttribute({name:'Remarks',type:'Text',required:false});
+  A.completed=createAttribute({name:'Is Completed',type:'Boolean',required:true});
+  A.date=createAttribute({name:'Submission Date',type:'Date',required:true});
+  A.rating=createAttribute({name:'Rating',type:'Dropdown',options:['1','2','3','4','5'],required:true});
+  A.sentiment=createAttribute({name:'Sentiment',type:'Dropdown',options:['Positive','Neutral','Negative'],required:false});
+  // Additional reusable attributes (catalog only)
+  createAttribute({name:'Environment',type:'Dropdown',options:['Production','Staging','Development','QA'],required:true});
+  createAttribute({name:'Latency (ms)',type:'Number',required:false});
+  createAttribute({name:'Error Code',type:'Text',required:false});
+  createAttribute({name:'Region',type:'Dropdown',options:['US-East','US-West','EU','APAC','India'],required:false});
+  createAttribute({name:'Session ID',type:'Text',required:true});
+  createAttribute({name:'Retry Count',type:'Number',required:false});
+  createAttribute({name:'Is Verified',type:'Boolean',required:true});
+  createAttribute({name:'Event Type',type:'Dropdown',options:['Click','View','Submit','Error','Sync'],required:true});
+  createAttribute({name:'Priority',type:'Dropdown',options:['Low','Medium','High','Critical'],required:false});
+  createAttribute({name:'Device',type:'Dropdown',options:['Desktop','Mobile','Tablet'],required:false});
+  createAttribute({name:'Browser',type:'Text',required:false});
+  createAttribute({name:'Response Time',type:'Number',required:false});
+  createAttribute({name:'Resolved At',type:'Date',required:false});
+  createAttribute({name:'Channel',type:'Dropdown',options:['Web','API','Mobile','Webhook'],required:false});
+  createAttribute({name:'User Role',type:'Dropdown',options:['Admin','Editor','Viewer','Guest'],required:false});
+  createAttribute({name:'IP Address',type:'Text',required:false});
+  createAttribute({name:'Payload Size (KB)',type:'Number',required:false});
+  createAttribute({name:'Is Archived',type:'Boolean',required:false});
+  createAttribute({name:'Created At',type:'Date',required:true});
+  createAttribute({name:'Tags',type:'Text',required:false});
+  createAttribute({name:'Severity',type:'Dropdown',options:['Info','Warning','Error','Fatal'],required:false});
+  createAttribute({name:'Uptime (%)',type:'Number',required:false});
+  createAttribute({name:'Feature Flag',type:'Boolean',required:false});
+  createAttribute({name:'Locale',type:'Dropdown',options:['en-US','en-GB','hi-IN','fr-FR','de-DE'],required:false});
+  var tools=['Commons','Form Builder','CLART','GWMT','Training Management'];
+  var orgs=[{name:'Acme Corp',program:'Digital Transformation'},{name:'Tech Collective',program:'Innovation Hub'},
+    {name:'Global Foundation',program:'Community Outreach'},{name:'EcoPartners',program:'Sustainability Initiative'},
+    {name:'InSuite Alliance',program:'Enterprise Suite'}];
+  tools.forEach(function(t){createForm({name:t+' Telemetry',description:'Telemetry data collection for '+t,
+    attributes:[A.status.id,A.qty.id,A.api.id,A.remarks.id,A.completed.id,A.date.id,A.rating.id,A.sentiment.id],
+    context:{type:'Tool',toolName:t},status:'Active'});});
+  orgs.forEach(function(o){createForm({name:o.name+' - '+o.program+' Telemetry',description:'Telemetry data for '+o.name+"'s "+o.program,
+    attributes:[A.status.id,A.qty.id,A.remarks.id,A.rating.id,A.sentiment.id],
+    context:{type:'Organization-Program',organizationName:o.name,programName:o.program},status:'Active'});});
+  // Extra Organization-Program forms to populate the Form Builder list (no submissions; keeps tool ratings intact)
+  var moreOrgs=[
+    {name:'BluePeak Labs',program:'Product Analytics',status:'Active'},{name:'NorthWind Energy',program:'Grid Monitoring',status:'Active'},
+    {name:'Vertex Health',program:'Patient Outcomes',status:'Inactive'},{name:'Cobalt Retail',program:'Store Insights',status:'Active'},
+    {name:'Harbor Logistics',program:'Fleet Tracking',status:'Active'},{name:'Lumen Education',program:'Learning Analytics',status:'Active'},
+    {name:'Summit Finance',program:'Risk Reporting',status:'Inactive'},{name:'Terra Agri',program:'Yield Monitoring',status:'Active'},
+    {name:'Pulse Media',program:'Engagement Metrics',status:'Active'},{name:'Ironclad Security',program:'Threat Telemetry',status:'Active'},
+    {name:'Meridian Travel',program:'Booking Insights',status:'Inactive'},{name:'Orbit Telecom',program:'Network Health',status:'Active'},
+    {name:'Everline Insurance',program:'Claims Analytics',status:'Active'},{name:'Cascade Water',program:'Usage Monitoring',status:'Active'}
+  ];
+  moreOrgs.forEach(function(o){createForm({name:o.name+' - '+o.program+' Telemetry',description:'Telemetry data for '+o.name+"'s "+o.program,
+    attributes:[A.status.id,A.qty.id,A.remarks.id,A.rating.id,A.sentiment.id],
+    context:{type:'Organization-Program',organizationName:o.name,programName:o.program},status:o.status});});
+  // Fixed, curated dataset — deterministic so metrics stay stable across reloads.
+  // Commons = 5.0★ · 1 response (highest rated); Training Management = 2.0★ (needs attention).
+  var today=new Date().toISOString().split('T')[0];
+  function toolForm(name){return forms.find(function(f){return f.context.type==='Tool'&&f.context.toolName===name;});}
+  function orgForm(name){return forms.find(function(f){return f.context.type==='Organization-Program'&&f.context.organizationName===name;});}
+  var seed=[
+    {tool:'Commons',user:'user_maya_rodriguez',status:'Success',qty:42,api:'/api/v2/data',remarks:'Sync worked flawlessly across all tools.',completed:true,rating:'5',sentiment:'Positive'},
+    {tool:'Form Builder',user:'user_james_chen',status:'Success',qty:31,api:'/api/v2/data',remarks:'Dashboards load fast and the builder is intuitive.',completed:true,rating:'4',sentiment:'Positive'},
+    {tool:'Form Builder',user:'user_sarah_williams',status:'In Progress',qty:18,api:'/api/v1/data',remarks:'Great experience overall, just minor polish needed.',completed:false,rating:'4',sentiment:'Positive'},
+    {tool:'CLART',user:'user_david_kumar',status:'Success',qty:57,api:'/api/v3/data',remarks:'Works well, occasional lag on large datasets.',completed:true,rating:'3',sentiment:'Neutral'},
+    {tool:'CLART',user:'user_emily_zhang',status:'Success',qty:23,api:'/api/v2/data',remarks:'Reliable telemetry capture at an average speed.',completed:true,rating:'3',sentiment:'Neutral'},
+    {tool:'GWMT',user:'user_maya_rodriguez',status:'Failed',qty:12,api:'/api/v1/data',remarks:'Some fields did not validate as expected.',completed:false,rating:'2',sentiment:'Negative'},
+    {tool:'GWMT',user:'user_james_chen',status:'In Progress',qty:29,api:'/api/v2/data',remarks:'Acceptable, though a few rough edges remain.',completed:false,rating:'3',sentiment:'Neutral'},
+    {tool:'Training Management',user:'user_sarah_williams',status:'Failed',qty:9,api:'/api/v1/data',remarks:'Response time was noticeably slow this week.',completed:false,rating:'2',sentiment:'Negative'},
+    {tool:'Training Management',user:'user_david_kumar',status:'Failed',qty:14,api:'/api/v1/data',remarks:'Reports lagged and a couple of syncs timed out.',completed:false,rating:'2',sentiment:'Negative'},
+    {org:'Acme Corp',user:'user_david_kumar',status:'Success',qty:46,remarks:'Rollout across the program went smoothly.',rating:'4',sentiment:'Positive'},
+    {org:'Tech Collective',user:'user_emily_zhang',status:'Success',qty:34,remarks:'Decent adoption, tracking looks consistent.',rating:'3',sentiment:'Neutral'}
+  ];
+  seed.forEach(function(s){
+    var form=s.org?orgForm(s.org):toolForm(s.tool);
+    if(!form)return;
+    var vals={};
+    vals[A.status.id]=s.status;vals[A.qty.id]=s.qty;vals[A.api.id]=s.api;vals[A.remarks.id]=s.remarks;
+    vals[A.completed.id]=s.completed;vals[A.date.id]=today;vals[A.rating.id]=s.rating;vals[A.sentiment.id]=s.sentiment;
+    var data=form.attributes.filter(function(id){return vals[id]!==undefined;}).map(function(id){return{attributeId:id,value:vals[id]};});
+    syncTelemetryData(form.id,s.user,data);
+  });
+
+  // Extra submissions (org forms only) so the Recent Submissions list exceeds one page.
+  // These don't affect the per-tool ratings / Highest-Rated / Needs-Attention cards.
+  var xOrgs=['BluePeak Labs','NorthWind Energy','Cobalt Retail','Harbor Logistics','Lumen Education','Terra Agri','Pulse Media','Ironclad Security','Orbit Telecom','Everline Insurance','Cascade Water'];
+  var xUsers=['user_maya_rodriguez','user_james_chen','user_sarah_williams','user_david_kumar','user_emily_zhang'];
+  var xSent=['Positive','Neutral','Negative'];
+  var xRemarks=['Steady telemetry flow this cycle.','Minor delays during peak hours.','Great reliability across the board.','A few validation warnings logged.','Adoption trending upward.'];
+  for(var x=0;x<14;x++){
+    var f=orgForm(xOrgs[x%xOrgs.length]);if(!f)continue;
+    var sent=xSent[x%3];var rating=sent==='Positive'?'4':sent==='Negative'?'2':'3';
+    syncTelemetryData(f.id,xUsers[x%xUsers.length],[
+      {attributeId:A.status.id,value:['Success','In Progress','Failed'][x%3]},
+      {attributeId:A.qty.id,value:15+x*2},
+      {attributeId:A.remarks.id,value:xRemarks[x%xRemarks.length]},
+      {attributeId:A.rating.id,value:rating},
+      {attributeId:A.sentiment.id,value:sent}
+    ]);
+  }
+}
+
+/* ============ helpers ============ */
+function icons(){if(window.lucide)lucide.createIcons();}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function initials(userId){return userId.replace('user_','').split('_').map(function(p){return p[0].toUpperCase();}).join('');}
+var AVATAR_COLORS=['#1F4397','#39A248','#B26A00','#C62828','#3B2BBF','#0E7490','#9333EA','#DB2777','#2E7D34','#EA580C'];
+function avatarColor(seed){var h=0;for(var i=0;i<seed.length;i++){h=(h*31+seed.charCodeAt(i))>>>0;}return AVATAR_COLORS[h%AVATAR_COLORS.length];}
+function userName(userId){return userId.replace('user_','').split('_').map(function(p){return p.charAt(0).toUpperCase()+p.slice(1);}).join(' ');}
+function attrName(id){var a=getAttrById(id);return a?a.name:'Unknown';}
+function fmtVal(v){if(typeof v==='boolean')return v?'Yes':'No';if(v==null)return 'N/A';return String(v);}
+function starSVG(fill){return '<svg viewBox="0 0 24 24" fill="'+(fill?'#F5A623':'none')+'" stroke="'+(fill?'#F5A623':'#d0d5dd')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
+
+/* ============ tabs ============ */
+function switchTab(tab){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('show',s.id===tab);});
+  document.querySelectorAll('#nav a').forEach(function(a){a.classList.toggle('active',a.dataset.tab===tab);});
+  window.scrollTo(0,0);
+  if(tab==='overview')renderOverview();
+  if(tab==='attributes')renderAttrs();
+  if(tab==='forms')renderForms();
+  if(tab==='responses')renderResponses();
+  if(tab==='notifications')renderNotifs();
+  if(tab==='help')renderHelp();
+  if(tab==='profile')renderProfile();
+  if(tab==='search'){var si=document.getElementById('globalSearch');if(si)si.value='';runSearch('');}
+  try{localStorage.setItem('tos_tab',tab);}catch(e){}
+}
+document.getElementById('nav').addEventListener('click',function(e){var a=e.target.closest('a');if(a&&!a.classList.contains('disabled')){switchTab(a.dataset.tab);closeNav();}});
+function toggleNav(e){if(e)e.stopPropagation();document.getElementById('nav').classList.toggle('open');}
+function closeNav(){document.getElementById('nav').classList.remove('open');}
+document.addEventListener('click',function(e){if(!e.target.closest('#nav')&&!e.target.closest('.navtoggle'))closeNav();});
+
+/* ============ NOTIFICATIONS ============ */
+var notifications=[
+  {type:'blue',icon:'inbox',title:'New submission received',desc:'Commons Telemetry received a new response from Maya Rodriguez.',time:'5 min ago',unread:true},
+  {type:'red',icon:'alert-triangle',title:'Validation failed',desc:'A GWMT Telemetry submission failed a data-type check.',time:'1 hour ago',unread:true},
+  {type:'green',icon:'file-text',title:'Weekly report ready',desc:'Your telemetry insights report for this week is available.',time:'Yesterday',unread:false},
+  {type:'amber',icon:'pencil',title:'Attribute updated',desc:'Options for the “Rating” attribute were modified.',time:'2 days ago',unread:false},
+  {type:'blue',icon:'plug',title:'New tool connected',desc:'Training Management started sending telemetry data.',time:'3 days ago',unread:false},
+  {type:'green',icon:'check-circle-2',title:'Form published',desc:'“Acme Corp - Digital Transformation Telemetry” is now active.',time:'3 days ago',unread:false},
+  {type:'blue',icon:'user-plus',title:'New user onboarded',desc:'user_emily_zhang started submitting telemetry data.',time:'4 days ago',unread:false},
+  {type:'amber',icon:'clock',title:'Sync delayed',desc:'A batch of submissions from Orbit Telecom was queued for retry.',time:'5 days ago',unread:false},
+  {type:'red',icon:'x-circle',title:'API error',desc:'FormData Retrieval API returned a 500 for one request.',time:'6 days ago',unread:false},
+  {type:'green',icon:'trending-up',title:'Milestone reached',desc:'Total submissions crossed 25 across all organizations.',time:'1 week ago',unread:false},
+  {type:'blue',icon:'file-plus',title:'New attribute created',desc:'“Environment” dropdown attribute was added to the catalog.',time:'1 week ago',unread:false},
+  {type:'amber',icon:'settings',title:'Settings changed',desc:'Default submission validation rules were updated.',time:'2 weeks ago',unread:false},
+  {type:'green',icon:'download-cloud',title:'Export completed',desc:'Your FormData export for last month is ready to download.',time:'2 weeks ago',unread:false}
+];
+function renderNotifs(){
+  document.getElementById('notifList').innerHTML=notifications.map(function(n,i){
+    return '<div class="notif'+(n.unread?' unread':'')+'" onclick="readNotif('+i+')">'+
+      '<div class="notif-ic ni-'+n.type+'"><i data-lucide="'+n.icon+'"></i></div>'+
+      '<div class="notif-body"><div class="notif-t">'+esc(n.title)+'</div><div class="notif-d">'+esc(n.desc)+'</div>'+
+      '<div class="notif-time"><i data-lucide="clock"></i>'+esc(n.time)+'</div></div>'+
+      (n.unread?'<div class="notif-dot"></div>':'')+'</div>';
+  }).join('');
+  updateNotifBadge();icons();
+}
+function updateNotifBadge(){
+  var unread=notifications.filter(function(n){return n.unread;}).length;
+  var b=document.getElementById('notifBadge');
+  if(unread>0){b.textContent=unread;b.style.display='';}else{b.style.display='none';}
+}
+function readNotif(i){notifications[i].unread=false;renderNotifs();}
+function markAllRead(){notifications.forEach(function(n){n.unread=false;});renderNotifs();}
+
+/* ============ HELP ============ */
+var faqs=[
+  {q:'What is an attribute?',a:'An attribute is a reusable field with a type (Text, Number, Dropdown, Boolean or Date) that you attach to telemetry forms. Create and manage them on the Attributes page.'},
+  {q:'How do I create a telemetry form?',a:'Go to Forms → New Form, give it a name, choose a context (Tool or Organization-Program), and select the attributes to bind. Active forms accept submissions.'},
+  {q:'What does the SyncTelemetry API do?',a:'It submits telemetry data with a form ID, user ID and attribute values. The payload is validated against the form (required fields, data types, dropdown options) before being stored.'},
+  {q:'How is the average rating calculated?',a:'It averages the numeric “Rating” attribute across all submissions that include a rating, shown on the Overview page along with per-tool breakdowns.'},
+  {q:'Can I make an attribute required?',a:'Yes — enable “Required field” when creating or editing an attribute. Required fields must have a value for a submission to pass validation.'}
+];
+function renderHelp(){
+  document.getElementById('faqList').innerHTML=faqs.map(function(f,i){
+    return '<div class="faq" id="faq'+i+'"><div class="faq-q" onclick="toggleFAQ('+i+')">'+esc(f.q)+'<i data-lucide="chevron-down"></i></div><div class="faq-a">'+esc(f.a)+'</div></div>';
+  }).join('');
+  icons();
+}
+function toggleFAQ(i){document.getElementById('faq'+i).classList.toggle('open');}
+
+/* ============ custom dropdown ============ */
+function buildCsel(id,icon,options){
+  var el=document.getElementById(id);
+  el.innerHTML='<button type="button" class="csel-btn" onclick="toggleCsel(this)"><i class="csel-lead" data-lucide="'+icon+'"></i><span class="csel-label">'+esc(options[0])+'</span><i class="csel-chev" data-lucide="chevron-down"></i></button>'+
+    '<div class="csel-menu">'+options.map(function(o,i){return '<div class="csel-opt'+(i===0?' sel':'')+'" onclick="pickCsel(this)"><span class="csel-check"><i data-lucide="check"></i></span>'+esc(o)+'</div>';}).join('')+'</div>';
+}
+function toggleCsel(btn){var c=btn.closest('.csel');var open=c.classList.contains('open');
+  document.querySelectorAll('.csel.open').forEach(function(x){x.classList.remove('open');clearFixedMenu(x);});
+  if(!open){c.classList.add('open');if(c.classList.contains('csel-full'))positionFixedMenu(c);}}
+function positionFixedMenu(c){var btn=c.querySelector('.csel-btn'),menu=c.querySelector('.csel-menu'),r=btn.getBoundingClientRect();
+  menu.style.position='fixed';menu.style.top=(r.bottom+6)+'px';menu.style.left=r.left+'px';menu.style.width=r.width+'px';menu.style.minWidth='0';}
+function clearFixedMenu(c){var menu=c.querySelector('.csel-menu');if(menu){menu.style.position='';menu.style.top='';menu.style.left='';menu.style.width='';menu.style.minWidth='';}}
+function pickCsel(opt){var c=opt.closest('.csel');
+  c.querySelectorAll('.csel-opt').forEach(function(o){o.classList.remove('sel');});
+  opt.classList.add('sel');
+  c.querySelector('.csel-label').textContent=opt.textContent.trim();
+  c.classList.remove('open');clearFixedMenu(c);}
+/* form-control variant of custom dropdown (holds a value + fires onchange) */
+function cselForm(id,options,value,onchangeFn){
+  var host=document.getElementById(id);
+  host.classList.add('csel','csel-full');host.dataset.value=value;if(onchangeFn)host.dataset.onchange=onchangeFn;
+  host.innerHTML='<button type="button" class="csel-btn" onclick="toggleCsel(this)"><span class="csel-label">'+esc(value)+'</span><i class="csel-chev" data-lucide="chevron-down"></i></button>'+
+    '<div class="csel-menu">'+options.map(function(o){return '<div class="csel-opt'+(o===value?' sel':'')+'" data-v="'+esc(o)+'" onclick="pickCsel2(this)"><span class="csel-check"><i data-lucide="check"></i></span>'+esc(o)+'</div>';}).join('')+'</div>';
+  icons();
+}
+function pickCsel2(opt){var c=opt.closest('.csel');var v=opt.getAttribute('data-v');
+  c.dataset.value=v;
+  c.querySelectorAll('.csel-opt').forEach(function(o){o.classList.remove('sel');});opt.classList.add('sel');
+  c.querySelector('.csel-label').textContent=opt.textContent.trim();
+  c.classList.remove('open');clearFixedMenu(c);
+  var fn=c.dataset.onchange;if(fn&&window[fn])window[fn]();}
+function cselValue(id){return document.getElementById(id).dataset.value;}
+document.addEventListener('click',function(e){if(!e.target.closest('.csel'))document.querySelectorAll('.csel.open').forEach(function(x){x.classList.remove('open');clearFixedMenu(x);});});
+
+/* ============ OVERVIEW ============ */
+function renderOverview(){
+  var orgs=[].concat.apply([],[]),oset={},tset={};
+  forms.forEach(function(f){if(f.context.type==='Organization-Program'&&f.context.organizationName)oset[f.context.organizationName]=1;
+    if(f.context.type==='Tool'&&f.context.toolName)tset[f.context.toolName]=1;});
+  var organizations=Object.keys(oset),tools=Object.keys(tset);
+  if(!document.getElementById('cselOrg').innerHTML){
+    buildCsel('cselOrg','building-2',['All orgs'].concat(organizations));
+    buildCsel('cselTool','wrench',['All tools'].concat(tools));
+    buildCsel('cselTime','calendar',['All time','Today','This week','This month']);
+  }
+
+  var total=submissions.length;
+  document.getElementById('ovCount').textContent=total+' submissions';
+
+  var ratings=submissions.map(function(s){var e=s.data.find(function(d){return d.attributeId===A.rating.id;});return e?parseFloat(e.value):0;}).filter(function(r){return r>0;});
+  var avg=ratings.length?(ratings.reduce(function(a,b){return a+b;},0)/ratings.length).toFixed(1):'0.0';
+
+  var toolRatings=tools.map(function(tool){
+    var tf=forms.find(function(f){return f.context.type==='Tool'&&f.context.toolName===tool;});
+    if(!tf)return{tool:tool,avg:0,count:0};
+    var ts=submissions.filter(function(s){return s.formId===tf.id;});
+    var rd=ts.map(function(s){var e=s.data.find(function(d){return d.attributeId===A.rating.id;});return e?parseFloat(e.value):0;}).filter(function(r){return r>0;});
+    return{tool:tool,avg:rd.length?rd.reduce(function(a,b){return a+b;},0)/rd.length:0,count:ts.length};
+  }).sort(function(a,b){return b.avg-a.avg;});
+  var high=toolRatings[0]||{tool:'N/A',avg:0,count:0},low=toolRatings[toolRatings.length-1]||{tool:'N/A',avg:0,count:0};
+
+  document.getElementById('ovStats').innerHTML=
+    stat('bar-chart-3','',total,'across '+organizations.length+' organizations','TOTAL RESPONSES')+
+    stat('star','amber','<span>'+avg+'</span>'+starIcon(),'out of 5.0','AVG RATING')+
+    stat('trending-up','green',valSm(high.tool),'avg '+high.avg.toFixed(1)+'★ · '+high.count+' responses','HIGHEST RATED')+
+    stat('alert-triangle','red',valSm(low.tool),'avg '+low.avg.toFixed(1)+'★ · '+low.count+' responses','NEEDS ATTENTION');
+
+  document.getElementById('ovBars').innerHTML=toolRatings.map(function(t){
+    var c=ratingColor(t.avg);
+    var tip=esc(t.tool)+' — '+t.avg.toFixed(1)+'★ · '+t.count+' response'+(t.count!==1?'s':'');
+    return '<div class="barrow" data-tip="'+tip+'"><span class="bl">'+esc(t.tool)+'</span><span class="bt"><span class="bf" style="width:'+((t.avg/5)*100)+'%;background:linear-gradient(90deg,'+c.a+','+c.b+')"></span></span><span class="bv" style="color:'+c.b+'">'+t.avg.toFixed(1)+'</span></div>';
+  }).join('');
+
+  var sc={Positive:0,Neutral:0,Negative:0};
+  submissions.forEach(function(s){var e=s.data.find(function(d){return d.attributeId===A.sentiment.id;});if(e&&sc[e.value]!==undefined)sc[e.value]++;});
+  var ts=sc.Positive+sc.Neutral+sc.Negative||1;
+  var C=502.65;
+  var segs=[{v:sc.Positive,c:'#39A248',n:'Positive'},{v:sc.Neutral,c:'#A3AED0',n:'Neutral'},{v:sc.Negative,c:'#EF4444',n:'Negative'}];
+  var off=0,circles='';
+  segs.forEach(function(g){var len=(g.v/ts)*C;var pct=Math.round((g.v/ts)*100);var tip=g.n+' — '+g.v+' response'+(g.v!==1?'s':'')+' · '+pct+'%';circles+='<circle cx="100" cy="100" r="80" fill="none" stroke="'+g.c+'" stroke-width="38" stroke-dasharray="'+len+' '+C+'" stroke-dashoffset="-'+off+'" data-tip="'+tip+'" style="pointer-events:visibleStroke;cursor:pointer"/>';off+=len;});
+  document.getElementById('ovDonut').innerHTML=
+    '<div style="position:relative;width:250px;height:250px"><svg viewBox="0 0 200 200" style="transform:rotate(-90deg)"><circle cx="100" cy="100" r="80" fill="none" stroke="#EEF2F9" stroke-width="38"/>'+circles+'</svg>'+
+    '<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none"><div><div style="font-family:var(--font-metric);font-weight:700;font-size:36px;color:var(--metric-value)">'+ (sc.Positive+sc.Neutral+sc.Negative) +'</div><div style="font-size:12px;color:var(--metric-muted)">responses</div></div></div></div>';
+  document.getElementById('ovLegend').innerHTML=
+    leg('#39A248','Positive',sc.Positive,ts)+leg('#A3AED0','Neutral',sc.Neutral,ts)+leg('#EF4444','Negative',sc.Negative,ts);
+  var posRate=Math.round((sc.Positive/ts)*100);
+  document.getElementById('ovSat').innerHTML='<b>'+posRate+'%</b> positive satisfaction rate';
+
+  var recent=submissions.slice(-5).reverse();
+  document.getElementById('ovFeed').innerHTML=recent.map(function(sub){
+    var form=getFormById(sub.formId);
+    var org=form&&form.context.type==='Organization-Program'?form.context.organizationName:'';
+    var toolN=form&&form.context.type==='Tool'?form.context.toolName:'';
+    var rEntry=sub.data.find(function(d){return d.attributeId===A.rating.id;});var rating=rEntry?parseInt(rEntry.value):0;
+    var rem=sub.data.find(function(d){return d.attributeId===A.remarks.id;});
+    var stars='';for(var i=1;i<=5;i++)stars+=starSVG(i<=rating);
+    var avCol=avatarColor(sub.userId);
+    return '<div class="feed-item"><div class="avatar" style="background:'+avCol+'29;color:'+avCol+'">'+initials(sub.userId)+'</div><div style="flex:1;min-width:0">'+
+      '<div class="feed-top"><div><span class="feed-name">'+esc(userName(sub.userId))+'</span><span class="feed-org">'+esc(org||toolN||'')+'</span></div>'+
+      '<span class="badge b-blue"><span class="dot"></span>'+esc(toolN||(form?form.name:''))+'</span></div>'+
+      '<div class="feed-txt">'+esc(rem?rem.value:'No remarks provided')+'</div><div class="rstars">'+stars+'</div></div></div>';
+  }).join('')||'<div class="empty">No feedback yet.</div>';
+  icons();
+}
+function stat(ic,cls,val,dl,lab){return '<div class="stat"><div class="ic '+cls+'"><i data-lucide="'+ic+'"></i></div><div><div class="lab">'+lab+'</div><div class="val">'+val+'</div><div class="dl">'+dl+'</div></div></div>';}
+function valSm(t){return '<span class="valsm">'+esc(t)+'</span>';}
+function starIcon(){return '<svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';}
+function ratingColor(v){
+  if(v>=4)return{a:'#4fbf67',b:'#39A248'};
+  if(v>=3)return{a:'#2a6bcf',b:'#1F4397'};
+  if(v>=2.5)return{a:'#f9b94e',b:'#F5A623'};
+  return{a:'#f5654e',b:'#EF4444'};
+}
+function leg(c,name,n,total){var pct=total?Math.round((n/total)*100):0;var tip=name+' — '+n+' response'+(n!==1?'s':'')+' · '+pct+'%';return '<div class="li" data-tip="'+tip+'" style="cursor:pointer"><span class="sw" style="background:'+c+'"></span>'+name+'<span class="lc">'+n+'</span></div>';}
+
+/* ============ ATTRIBUTES ============ */
+var attrPage=1,attrPerPage=20,attrQuery='';
+var TYPE_BADGE={Text:'b-txt',Number:'b-num',Dropdown:'b-drop',Boolean:'b-bool',Date:'b-date'};
+function renderAttrs(){
+  var q=attrQuery.trim().toLowerCase();
+  var list=attributes.filter(function(a){return !q||a.name.toLowerCase().indexOf(q)>=0||a.type.toLowerCase().indexOf(q)>=0;});
+  var total=list.length,pages=Math.max(1,Math.ceil(total/attrPerPage));
+  if(attrPage>pages)attrPage=pages;if(attrPage<1)attrPage=1;
+  var start=(attrPage-1)*attrPerPage,pageItems=list.slice(start,start+attrPerPage);
+  var tb=document.getElementById('attrRows');
+  if(!total){tb.innerHTML='<tr><td colspan="5"><div class="empty">'+(q?'No attributes match “'+esc(attrQuery)+'”.':'No attributes created yet. Click “New Attribute” to get started.')+'</div></td></tr>';}
+  else{tb.innerHTML=pageItems.map(function(a){
+    var opts=a.options?('<div class="flex wrap g8">'+a.options.slice(0,3).map(function(o){return '<span class="opt-chip">'+esc(o)+'</span>';}).join('')+(a.options.length>3?'<span class="chip-more" onclick="openAttrOptions(\''+a.id+'\')">+'+(a.options.length-3)+' more</span>':'')+'</div>'):'<span style="color:var(--text-muted)">—</span>';
+    var req=a.required?'<span class="badge b-e"><span class="dot"></span>Required</span>':'<span class="badge b-g"><span class="dot"></span>Optional</span>';
+    return '<tr><td><span class="tt">'+esc(a.name)+'</span></td><td><span class="badge '+(TYPE_BADGE[a.type]||'b-g')+'"><span class="dot"></span>'+a.type+'</span></td><td>'+opts+'</td><td>'+req+'</td>'+
+      '<td class="tar"><div class="flex ac g8" style="justify-content:flex-end"><span class="iconpill" onclick="openAttrModal(\''+a.id+'\')"><i data-lucide="pencil"></i></span><span class="iconpill danger" onclick="delAttr(\''+a.id+'\')"><i data-lucide="trash-2"></i></span></div></td></tr>';
+  }).join('');}
+  document.getElementById('attrCount').textContent=total+' attribute'+(total!==1?'s':'');
+  document.getElementById('attrFoot').innerHTML=total?attrFootHTML(start,pageItems.length,total,attrPage,pages):'';
+  var req=attributes.filter(function(a){return a.required;}).length;
+  document.getElementById('attrSummary').innerHTML=attributes.length?'<span>Total: <b>'+attributes.length+'</b> attribute'+(attributes.length!==1?'s':'')+'</span><span>'+req+' required, '+(attributes.length-req)+' optional</span>':'';
+  icons();
+}
+function attrFootHTML(start,shown,total,page,pages){
+  var nums='';for(var p=1;p<=pages;p++)nums+='<span class="pg'+(p===page?' on':'')+'" onclick="gotoAttrPage('+p+')">'+p+'</span>';
+  return '<span>Showing <b>'+(start+1)+'–'+(start+shown)+'</b> of <b>'+total+'</b></span>'+
+    '<span class="pag"><span class="pg'+(page===1?' disabled':'')+'" onclick="gotoAttrPage('+(page-1)+')"><i data-lucide="chevron-left"></i></span>'+nums+'<span class="pg'+(page===pages?' disabled':'')+'" onclick="gotoAttrPage('+(page+1)+')"><i data-lucide="chevron-right"></i></span></span>';
+}
+function gotoAttrPage(p){attrPage=p;renderAttrs();}
+function attrSearch(v){attrQuery=v;attrPage=1;renderAttrs();}
+var editAttrId=null;
+function openAttrModal(id){
+  editAttrId=id||null;
+  var m=document.getElementById('attrModal');
+  var aType='Text';
+  if(id){var a=getAttrById(id);document.getElementById('attrModalTitle').textContent='Edit Attribute';document.getElementById('amSubmitLbl').textContent='Update Attribute';
+    amName.value=a.name;aType=a.type;amOptions.value=a.options?a.options.join(', '):'';amReq.checked=!!a.required;}
+  else{document.getElementById('attrModalTitle').textContent='Create New Attribute';document.getElementById('amSubmitLbl').textContent='Create Attribute';
+    amName.value='';amOptions.value='';amReq.checked=false;}
+  cselForm('amType',['Text','Number','Dropdown','Boolean','Date'],aType,'toggleAmOptions');
+  toggleAmOptions();m.classList.add('show');icons();
+}
+function closeAttrModal(){document.getElementById('attrModal').classList.remove('show');}
+function toggleAmOptions(){document.getElementById('amOptWrap').style.display=cselValue('amType')==='Dropdown'?'block':'none';}
+function saveAttr(e){e.preventDefault();
+  var amt=cselValue('amType');
+  var data={name:amName.value.trim(),type:amt,options:amt==='Dropdown'?amOptions.value.split(',').map(function(o){return o.trim();}).filter(Boolean):undefined,required:amReq.checked};
+  if(editAttrId){var a=getAttrById(editAttrId);Object.assign(a,data);}else{createAttribute(data);}
+  closeAttrModal();renderAttrs();
+}
+function delAttr(id){var a=getAttrById(id);confirmDialog('Delete attribute?','Are you sure you want to delete '+(a?'“'+a.name+'”':'this attribute')+'? This action cannot be undone.',function(){attributes=attributes.filter(function(x){return x.id!==id;});renderAttrs();});}
+/* reusable confirm dialog */
+var _confirmCb=null;
+function confirmDialog(title,msg,onYes){
+  document.getElementById('cfmTitle').textContent=title;
+  document.getElementById('cfmMsg').textContent=msg;
+  _confirmCb=onYes;
+  document.getElementById('confirmModal').classList.add('show');icons();
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('show');_confirmCb=null;}
+function confirmYes(){var cb=_confirmCb;closeConfirm();if(cb)cb();}
+
+/* ============ FORMS ============ */
+var formPage=1,formPerPage=20,formQuery='';
+function renderForms(){
+  var q=formQuery.trim().toLowerCase();
+  var list=forms.filter(function(f){
+    if(!q)return true;
+    var ctx=f.context.type==='Tool'?(f.context.toolName||''):((f.context.organizationName||'')+' '+(f.context.programName||''));
+    return f.name.toLowerCase().indexOf(q)>=0||ctx.toLowerCase().indexOf(q)>=0;
+  });
+  var total=list.length,pages=Math.max(1,Math.ceil(total/formPerPage));
+  if(formPage>pages)formPage=pages;if(formPage<1)formPage=1;
+  var start=(formPage-1)*formPerPage,pageItems=list.slice(start,start+formPerPage);
+  var tb=document.getElementById('formRows');
+  if(!total){tb.innerHTML='<tr><td colspan="6"><div class="empty">'+(q?'No forms match “'+esc(formQuery)+'”.':'No forms created yet. Click “New Form” to get started.')+'</div></td></tr>';}
+  else{tb.innerHTML=pageItems.map(function(f){
+    var ctxVal=f.context.type==='Tool'?f.context.toolName:(f.context.organizationName+' / '+f.context.programName);
+    var chips='<div class="flex wrap g8">'+f.attributes.slice(0,2).map(function(id){var a=getAttrById(id);return a?'<span class="chip-tag">'+esc(a.name)+'</span>':'';}).join('')+(f.attributes.length>2?'<span class="chip-more" onclick="openFormAttrs(\''+f.id+'\')">+'+(f.attributes.length-2)+' more</span>':'')+'</div>';
+    var status=f.status==='Active'?'<span class="stbadge st-active"><span class="sdot"></span>Active</span>':'<span class="stbadge st-inactive"><span class="sdot"></span>Inactive</span>';
+    return '<tr><td><div class="tt">'+esc(f.name)+'</div>'+(f.description?'<div class="ds">'+esc(f.description)+'</div>':'')+'</td>'+
+      '<td><span class="badge '+(f.context.type==='Tool'?'b-blue':'b-p')+'"><i data-lucide="'+(f.context.type==='Tool'?'wrench':'building-2')+'"></i>'+f.context.type+'</span></td>'+
+      '<td>'+esc(ctxVal)+'</td><td>'+chips+'</td><td>'+status+'</td>'+
+      '<td class="tar"><div class="flex ac g8" style="justify-content:flex-end"><span class="iconpill" onclick="openFormModal(\''+f.id+'\')"><i data-lucide="pencil"></i></span><span class="iconpill danger" onclick="delForm(\''+f.id+'\')"><i data-lucide="trash-2"></i></span></div></td></tr>';
+  }).join('');}
+  document.getElementById('formCount').textContent=total+' form'+(total!==1?'s':'');
+  document.getElementById('formFoot').innerHTML=total?formFootHTML(start,pageItems.length,total,formPage,pages):'';
+  var act=forms.filter(function(f){return f.status==='Active';}).length;
+  document.getElementById('formSummary').innerHTML=forms.length?'<span>Total: <b>'+forms.length+'</b> form'+(forms.length!==1?'s':'')+'</span><span>'+act+' active, '+(forms.length-act)+' inactive</span>':'';
+  icons();
+}
+function formFootHTML(start,shown,total,page,pages){
+  var nums='';for(var p=1;p<=pages;p++)nums+='<span class="pg'+(p===page?' on':'')+'" onclick="gotoFormPage('+p+')">'+p+'</span>';
+  return '<span>Showing <b>'+(start+1)+'–'+(start+shown)+'</b> of <b>'+total+'</b></span>'+
+    '<span class="pag"><span class="pg'+(page===1?' disabled':'')+'" onclick="gotoFormPage('+(page-1)+')"><i data-lucide="chevron-left"></i></span>'+nums+'<span class="pg'+(page===pages?' disabled':'')+'" onclick="gotoFormPage('+(page+1)+')"><i data-lucide="chevron-right"></i></span></span>';
+}
+function gotoFormPage(p){formPage=p;renderForms();}
+function formSearch(v){formQuery=v;formPage=1;renderForms();}
+var editFormId=null;
+function openFormModal(id){
+  editFormId=id||null;
+  buildAttrChecks(id?getFormById(id).attributes:[]);
+  var fStatus='Active';
+  if(id){var f=getFormById(id);document.getElementById('formModalTitle').textContent='Edit Form';document.getElementById('fmSubmitLbl').textContent='Update Form';
+    fmName.value=f.name;fmDesc.value=f.description||'';fStatus=f.status;
+    document.querySelector('input[name=fmCtx][value="'+f.context.type+'"]').checked=true;
+    fmTool.value=f.context.toolName||'';fmOrg.value=f.context.organizationName||'';fmProg.value=f.context.programName||'';}
+  else{document.getElementById('formModalTitle').textContent='Create New Form';document.getElementById('fmSubmitLbl').textContent='Create Form';
+    fmName.value='';fmDesc.value='';document.querySelector('input[name=fmCtx][value="Tool"]').checked=true;fmTool.value='';fmOrg.value='';fmProg.value='';}
+  cselForm('fmStatus',['Active','Inactive'],fStatus);
+  toggleFmCtx();updateFmCount();
+  document.getElementById('formModal').classList.add('show');icons();
+}
+function closeFormModal(){document.getElementById('formModal').classList.remove('show');}
+function toggleFmCtx(){var t=document.querySelector('input[name=fmCtx]:checked').value;
+  document.getElementById('fmToolWrap').style.display=t==='Tool'?'block':'none';
+  document.getElementById('fmOrgWrap').style.display=t==='Tool'?'none':'grid';}
+function buildAttrChecks(sel){
+  document.getElementById('fmAttrs').innerHTML=attributes.length?attributes.map(function(a){
+    return '<label class="attr-opt"><input type="checkbox" value="'+a.id+'" '+(sel.indexOf(a.id)>=0?'checked':'')+' onchange="updateFmCount()">'+
+      '<span class="ao-name">'+esc(a.name)+(a.required?'<span class="ao-req">*</span>':'')+'</span>'+
+      '<span class="badge '+(TYPE_BADGE[a.type]||'b-g')+' ao-badge"><span class="dot"></span>'+a.type+'</span></label>';
+  }).join(''):'<div style="padding:14px;color:var(--text-muted);font-size:14px">No attributes available. Please create attributes first.</div>';
+}
+function selectedAttrs(){return [].slice.call(document.querySelectorAll('#fmAttrs input:checked')).map(function(c){return c.value;});}
+function updateFmCount(){var n=selectedAttrs().length;document.getElementById('fmAttrCount').textContent='('+n+' selected)';document.getElementById('fmSubmit').disabled=n===0;}
+function saveForm(e){e.preventDefault();
+  var t=document.querySelector('input[name=fmCtx]:checked').value;
+  var data={name:fmName.value.trim(),description:fmDesc.value.trim(),attributes:selectedAttrs(),status:cselValue('fmStatus'),
+    context:t==='Tool'?{type:'Tool',toolName:fmTool.value.trim()}:{type:'Organization-Program',organizationName:fmOrg.value.trim(),programName:fmProg.value.trim()}};
+  if(!data.attributes.length)return;
+  if(editFormId){var f=getFormById(editFormId);Object.assign(f,data,{updatedAt:new Date()});}else{createForm(data);}
+  closeFormModal();renderForms();
+}
+function delForm(id){var f=getFormById(id);confirmDialog('Delete form?','Are you sure you want to delete '+(f?'“'+f.name+'”':'this form')+'? This action cannot be undone.',function(){forms=forms.filter(function(x){return x.id!==id;});renderForms();});}
+
+/* ============ RESPONSES ============ */
+function renderResponses(){
+  var active=forms.filter(function(f){return f.status==='Active';});
+  var sel=document.getElementById('rForm');
+  sel.innerHTML='<option value="">Choose a form…</option>'+active.map(function(f){return '<option value="'+f.id+'">'+esc(f.name)+'</option>';}).join('');
+  document.getElementById('rTotal').textContent=submissions.length;
+  resetResponses(true);
+  renderSubTable();
+  icons();
+  requestAnimationFrame(fitRSync);
+}
+function fitRSync(){
+  var sec=document.getElementById('responses');if(!sec||!sec.classList.contains('show'))return;
+  var card=sec.querySelector('.rsync-card');var left=sec.querySelector('.two > div:first-child');
+  if(!card||!left)return;
+  if(window.matchMedia('(max-width:1080px)').matches){card.style.height='';}
+  else{card.style.height=left.offsetHeight+'px';}
+}
+window.addEventListener('resize',fitRSync);
+var subPage=1,subPerPage=20;
+function renderSubTable(){
+  var tb=document.getElementById('rSubRows');
+  var list=submissions.slice().reverse();
+  var total=list.length,pages=Math.max(1,Math.ceil(total/subPerPage));
+  if(subPage>pages)subPage=pages;if(subPage<1)subPage=1;
+  var start=(subPage-1)*subPerPage,pageItems=list.slice(start,start+subPerPage);
+  if(!total){tb.innerHTML='<tr><td colspan="5"><div class="empty">No submissions yet.</div></td></tr>';document.getElementById('rSubCount').textContent='';document.getElementById('rSubFoot').innerHTML='';return;}
+  tb.innerHTML=pageItems.map(function(s){
+    var form=getFormById(s.formId);
+    var data='<div class="flex wrap g8">'+s.data.slice(0,2).map(function(e){return '<span class="opt-chip">'+esc(attrName(e.attributeId))+': '+esc(fmtVal(e.value))+'</span>';}).join('')+(s.data.length>2?'<span class="chip-more" onclick="openSubmissionData(\''+s.id+'\')">+'+(s.data.length-2)+' more</span>':'')+'</div>';
+    return '<tr><td style="font-family:var(--font-num)">'+esc(s.id.slice(0,20))+'…</td><td>'+esc(s.userId)+'</td><td>'+esc(form?form.name:'Unknown')+'</td><td>'+data+'</td><td style="font-family:var(--font-num)">'+new Date(s.submittedAt).toLocaleString()+'</td></tr>';
+  }).join('');
+  document.getElementById('rSubCount').textContent=total+' submission'+(total!==1?'s':'');
+  document.getElementById('rSubFoot').innerHTML=total>subPerPage?subFootHTML(start,pageItems.length,total,subPage,pages):'<span>Showing <b>'+(start+1)+'–'+(start+pageItems.length)+'</b> of <b>'+total+'</b></span>';
+  icons();
+}
+function subFootHTML(start,shown,total,page,pages){
+  var nums='';for(var p=1;p<=pages;p++)nums+='<span class="pg'+(p===page?' on':'')+'" onclick="gotoSubPage('+p+')">'+p+'</span>';
+  return '<span>Showing <b>'+(start+1)+'–'+(start+shown)+'</b> of <b>'+total+'</b></span>'+
+    '<span class="pag"><span class="pg'+(page===1?' disabled':'')+'" onclick="gotoSubPage('+(page-1)+')"><i data-lucide="chevron-left"></i></span>'+nums+'<span class="pg'+(page===pages?' disabled':'')+'" onclick="gotoSubPage('+(page+1)+')"><i data-lucide="chevron-right"></i></span></span>';
+}
+function gotoSubPage(p){subPage=p;renderSubTable();}
+var rState={form:'',user:'',sub:'',values:{}};
+function updateRSteps(){
+  var f=!!rState.form,u=!!rState.user,s=!!rState.sub;
+  function set(el,cls){el.className='rstep'+(cls?' '+cls:'');el.querySelector('.rn').innerHTML=cls==='done'?'<i data-lucide="check"></i>':el.getAttribute('data-n');}
+  var s1=document.getElementById('rStep1'),s2=document.getElementById('rStep2'),s3=document.getElementById('rStep3');
+  if(!s1.getAttribute('data-n')){s1.setAttribute('data-n','1');s2.setAttribute('data-n','2');s3.setAttribute('data-n','3');}
+  set(s1,f?'done':'on');
+  set(s2,!f?'':(u?'done':'on'));
+  set(s3,!u?'':(s?'done':'on'));
+  document.getElementById('rEmpty').style.display=s?'none':'flex';
+  icons();
+}
+function onRForm(){rState.form=document.getElementById('rForm').value;rState.user='';rState.sub='';rState.values={};updateRSteps();
+  var uw=document.getElementById('rUserWrap');
+  if(!rState.form){uw.style.display='none';document.getElementById('rSubWrap').style.display='none';document.getElementById('rFields').innerHTML='';document.getElementById('rActions').style.display='none';return;}
+  var subs=submissions.filter(function(s){return s.formId===rState.form;});
+  var users=[].concat.apply([],[]);var uset={};subs.forEach(function(s){uset[s.userId]=1;});users=Object.keys(uset);
+  document.getElementById('rUser').innerHTML='<option value="">Choose a user…</option>'+users.map(function(u){return '<option value="'+u+'">'+esc(u)+'</option>';}).join('');
+  document.getElementById('rUserHint').textContent=users.length+' user(s) have submitted this form';
+  uw.style.display='block';document.getElementById('rSubWrap').style.display='none';document.getElementById('rFields').innerHTML='';document.getElementById('rActions').style.display='none';clearValidation();
+}
+function onRUser(){rState.user=document.getElementById('rUser').value;rState.sub='';rState.values={};updateRSteps();
+  var sw=document.getElementById('rSubWrap');
+  if(!rState.user){sw.style.display='none';document.getElementById('rFields').innerHTML='';document.getElementById('rActions').style.display='none';return;}
+  var subs=submissions.filter(function(s){return s.formId===rState.form&&s.userId===rState.user;});
+  document.getElementById('rSub').innerHTML='<option value="">Choose a submission…</option>'+subs.map(function(s){return '<option value="'+s.id+'">'+esc(s.id.slice(0,26))+'… · '+new Date(s.submittedAt).toLocaleString()+'</option>';}).join('');
+  document.getElementById('rSubHint').textContent=subs.length+' submission(s) from this user';
+  sw.style.display='block';document.getElementById('rFields').innerHTML='';document.getElementById('rActions').style.display='none';clearValidation();
+}
+function onRSub(){rState.sub=document.getElementById('rSub').value;clearValidation();updateRSteps();
+  if(!rState.sub){document.getElementById('rFields').innerHTML='';document.getElementById('rActions').style.display='none';return;}
+  var sub=submissions.find(function(s){return s.id===rState.sub;});rState.values={};sub.data.forEach(function(e){rState.values[e.attributeId]=e.value;});
+  var form=getFormById(rState.form);
+  var fields=form.attributes.map(getAttrById).filter(Boolean).map(function(a){
+    var v=rState.values[a.id];
+    return '<div class="field"><label>'+esc(a.name)+(a.required?' <span class="req">*</span>':'')+'<span class="typ">('+a.type+')</span></label>'+renderReadField(a,v)+'</div>';
+  }).join('');
+  document.getElementById('rFields').innerHTML='<div style="padding-top:16px;border-top:1px solid var(--border-subtle);margin-top:4px"><div class="flex ac jb" style="margin-bottom:12px"><span class="section-title" style="font-size:14px">Form Attributes</span><span class="badge b-s"><span class="dot"></span>Data Retrieved</span></div>'+fields+'</div>';
+  document.getElementById('rActions').style.display='flex';icons();
+}
+function renderReadField(a,v){
+  if(a.type==='Boolean')return '<div class="radio-row" style="height:44px;align-items:center"><label class="rlabel"><input type="radio" disabled '+(v===true?'checked':'')+'><span>Yes</span></label><label class="rlabel"><input type="radio" disabled '+(v===false?'checked':'')+'><span>No</span></label></div>';
+  if(a.type==='Dropdown')return '<select class="inp" disabled><option>'+esc(v!=null&&v!==''?v:'No data')+'</option></select>';
+  var type=a.type==='Number'?'number':a.type==='Date'?'date':'text';
+  return '<input class="inp" type="'+type+'" readonly value="'+esc(v!=null?v:'')+'" placeholder="No data">';
+}
+function clearValidation(){document.getElementById('rValidWrap').style.display='none';document.getElementById('rValid').innerHTML='';document.getElementById('rAlert').innerHTML='';}
+function vstep(status,txt){var ic=status==='success'?'<i data-lucide="check-circle-2"></i>':status==='error'?'<i data-lucide="x-circle"></i>':'<span class="vpending"></span>';
+  return '<div class="vstep '+(status==='success'?'ok':status==='error'?'err':'pending')+'">'+ic+'<span class="vt">'+txt+'</span></div>';}
+function storeData(){
+  var btn=document.getElementById('rStoreLbl');btn.textContent='Storing…';
+  var wrap=document.getElementById('rValidWrap');wrap.style.display='block';document.getElementById('rAlert').innerHTML='';
+  var labels=['Validate form existence and status','Verify submitted attributes belong to form','Check attribute data types and values','Store data in telemetry system'];
+  var status=['pending','pending','pending','pending'];
+  function draw(){document.getElementById('rValid').innerHTML=labels.map(function(l,i){return vstep(status[i],l);}).join('');icons();}
+  draw();
+  var data=Object.keys(rState.values).map(function(id){return{attributeId:id,value:rState.values[id]};});
+  setTimeout(function(){status[0]=rState.form?'success':'error';draw();
+  setTimeout(function(){status[1]='success';draw();
+  setTimeout(function(){
+    var res=syncTelemetryData(rState.form,rState.user,data);
+    if(res.success){status[2]='success';status[3]='success';draw();
+      document.getElementById('rAlert').innerHTML='<div class="alertbox alert-ok"><i data-lucide="check-circle-2"></i><span>✓ Telemetry data submitted successfully! Submission ID: '+esc(res.submission.id)+'</span></div>';icons();
+      document.getElementById('rTotal').textContent=submissions.length;renderSubTable();
+    }else{status[2]='error';draw();
+      document.getElementById('rAlert').innerHTML='<div class="alertbox alert-err"><i data-lucide="x-circle"></i><div><div class="atitle">Validation Errors:</div><ul>'+res.errors.map(function(e){return '<li><strong>'+esc(e.field)+':</strong> '+esc(e.message)+'</li>';}).join('')+'</ul></div></div>';icons();}
+    btn.textContent='Store Data';
+  },320);},320);},320);
+}
+function resetResponses(keepForm){
+  if(!keepForm)document.getElementById('rForm').value='';
+  rState={form:'',user:'',sub:'',values:{}};
+  document.getElementById('rUserWrap').style.display='none';
+  document.getElementById('rSubWrap').style.display='none';
+  document.getElementById('rFields').innerHTML='';
+  document.getElementById('rActions').style.display='none';
+  clearValidation();updateRSteps();
+}
+
+/* close modal on backdrop click */
+document.querySelectorAll('.modal-back').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('show');});});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-back.show').forEach(function(m){m.classList.remove('show');});});
+
+/* ===== List modal (used by "+N more") ===== */
+function openListModal(title,sub,html){
+  document.getElementById('listModalTitle').textContent=title;
+  document.getElementById('listModalSub').textContent=sub||'';
+  document.getElementById('listModalBody').innerHTML=html;
+  document.getElementById('listModal').classList.add('show');icons();
+}
+function closeListModal(){document.getElementById('listModal').classList.remove('show');}
+/* ===== profile menu + auth ===== */
+function toggleProfileMenu(e){e.stopPropagation();var p=document.querySelector('.profile');var m=document.getElementById('profMenu');var open=m.classList.contains('show');m.classList.toggle('show',!open);p.classList.toggle('open',!open);}
+function closeProfileMenu(){document.getElementById('profMenu').classList.remove('show');document.querySelector('.profile').classList.remove('open');}
+document.addEventListener('click',function(e){if(!e.target.closest('.profile'))closeProfileMenu();});
+var profileData={name:'Admin User',email:'admin@telemetryos.io',phone:'+91 98765 43210',location:'Bengaluru, India',timezone:'IST (GMT+5:30)',role:'Platform Admin',org:'TelemetryOS',photo:''};
+var ROLE_OPTS=['Platform Admin','Program Analyst','Editor','Viewer'];
+var TZ_OPTS=['IST (GMT+5:30)','UTC (GMT+0)','GMT+1 (CET)','EST (GMT-5)','PST (GMT-8)','GMT+8 (SGT)'];
+function setAvatar(el,p){if(p.photo){el.style.backgroundImage='url('+p.photo+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';el.textContent='';}else{el.style.backgroundImage='';el.textContent=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();}}
+function openProfile(){closeProfileMenu();switchTab('profile');renderProfile();}
+function renderProfile(){
+  var p=profileData;
+  setAvatar(document.getElementById('profAvatar'),p);
+  document.getElementById('profName').textContent=p.name;
+  document.getElementById('profRole').textContent=p.role;
+  document.getElementById('profEmail').textContent=p.email;
+  document.getElementById('profPhone').textContent=p.phone;
+  document.getElementById('profLocation').textContent=p.location;
+}
+var _epPhoto='';
+function openEditProfile(){
+  var p=profileData;_epPhoto=p.photo;
+  document.getElementById('epName').value=p.name;document.getElementById('epEmail').value=p.email;
+  document.getElementById('epPhone').value=p.phone;document.getElementById('epLocation').value=p.location;
+  document.getElementById('epOrg').value=p.org;
+  cselForm('epRole',ROLE_OPTS,p.role);
+  cselForm('epTimezone',TZ_OPTS,p.timezone);
+  setAvatar(document.getElementById('epAvatar'),p);
+  document.getElementById('editProfileModal').classList.add('show');icons();
+}
+function closeEditProfile(){document.getElementById('editProfileModal').classList.remove('show');}
+function uploadPhoto(input){var f=input.files&&input.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){_epPhoto=ev.target.result;setAvatar(document.getElementById('epAvatar'),{photo:_epPhoto,name:''});};r.readAsDataURL(f);}
+function saveEditProfile(e){e.preventDefault();
+  profileData.name=document.getElementById('epName').value.trim()||profileData.name;
+  profileData.email=document.getElementById('epEmail').value.trim();
+  profileData.phone=document.getElementById('epPhone').value.trim();
+  profileData.location=document.getElementById('epLocation').value.trim();
+  profileData.org=document.getElementById('epOrg').value.trim();
+  profileData.role=cselValue('epRole');
+  profileData.timezone=cselValue('epTimezone');
+  profileData.photo=_epPhoto;
+  renderProfile();closeEditProfile();
+}
+function logout(){closeProfileMenu();document.getElementById('loginScreen').classList.add('show');window.scrollTo(0,0);icons();}
+function doLogin(){document.getElementById('loginScreen').classList.remove('show');switchTab('overview');}
+function closeLogin(){window.location.href='landing.html';}
+function toggleLoginPw(btn){var inp=btn.parentNode.querySelector('input');var show=inp.type==='password';inp.type=show?'text':'password';btn.innerHTML='<i data-lucide="'+(show?'eye':'eye-off')+'"></i>';icons();}
+function togglePwField(btn){var inp=btn.parentNode.querySelector('input');var show=inp.type==='password';inp.type=show?'text':'password';btn.innerHTML='<i data-lucide="'+(show?'eye':'eye-off')+'"></i>';icons();}
+function openPwd(){closeProfileMenu();['pwCurrent','pwNew','pwConfirm'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('pwErr').textContent='';validatePw();document.getElementById('pwdModal').classList.add('show');icons();}
+function closePwd(){document.getElementById('pwdModal').classList.remove('show');}
+function validatePw(){
+  var c=document.getElementById('pwCurrent').value,n=document.getElementById('pwNew').value,cf=document.getElementById('pwConfirm').value;
+  var err=document.getElementById('pwErr');
+  err.textContent=(cf&&n!==cf)?'Passwords do not match.':'';
+  document.getElementById('pwdSubmit').disabled=!(c&&n&&cf&&n===cf);
+}
+function submitPwd(e){e.preventDefault();closePwd();}
+
+/* ===== global search ===== */
+var recentSearches=['GWMT','Maya Rodriguez','timeout','Form Builder'];
+function openSearch(){switchTab('search');var inp=document.getElementById('globalSearch');inp.value='';runSearch('');setTimeout(function(){inp.focus();},30);icons();}
+function esca(s){return esc(s).replace(/'/g,"&#39;");}
+function runSearch(q){
+  q=(q||'').trim();var res=document.getElementById('searchResults');var ql=q.toLowerCase();
+  if(!q){
+    var html='';
+    if(recentSearches.length){
+      html+='<div class="srch-recent-head"><span class="srch-recent-title"><i data-lucide="clock"></i> Recent Searches</span><span class="srch-clear" onclick="clearRecent()">Clear all</span></div>';
+      html+='<div class="srch-chips">'+recentSearches.map(function(r){return '<span class="srch-recent-chip" onclick="pickRecent(\''+esca(r)+'\')"><i data-lucide="search"></i>'+esc(r)+'<span class="src-x" onclick="event.stopPropagation();removeRecent(\''+esca(r)+'\')"><i data-lucide="x"></i></span></span>';}).join('')+'</div>';
+    }
+    html+='<div class="srch-empty-state"><div class="srch-empty-ic"><i data-lucide="search"></i></div><div class="srch-empty-t">Search TelemetryOS</div><div class="srch-empty-d">Type a form name, attribute, tool or keyword to search across your telemetry data.</div></div>';
+    res.innerHTML=html;icons();return;
+  }
+  var attrs=attributes.filter(function(a){return a.name.toLowerCase().indexOf(ql)>=0||a.type.toLowerCase().indexOf(ql)>=0;}).slice(0,6);
+  var frms=forms.filter(function(f){var ctx=f.context.type==='Tool'?(f.context.toolName||''):((f.context.organizationName||'')+' '+(f.context.programName||''));return f.name.toLowerCase().indexOf(ql)>=0||ctx.toLowerCase().indexOf(ql)>=0;}).slice(0,6);
+  var html='';
+  if(attrs.length){html+='<div class="srch-group">Attributes</div>'+attrs.map(function(a){return '<div class="srch-item" onclick="pickSearch(\'attributes\',\''+esca(a.name)+'\')"><span class="srch-ic"><i data-lucide="tag"></i></span><span class="srch-name">'+esc(a.name)+'</span><span class="badge '+(TYPE_BADGE[a.type]||'b-g')+'"><span class="dot"></span>'+a.type+'</span></div>';}).join('');}
+  if(frms.length){html+='<div class="srch-group">Forms</div>'+frms.map(function(f){return '<div class="srch-item" onclick="pickSearch(\'forms\',\''+esca(f.name)+'\')"><span class="srch-ic"><i data-lucide="clipboard-list"></i></span><span class="srch-name">'+esc(f.name)+'</span></div>';}).join('');}
+  if(!attrs.length&&!frms.length)html='<div class="srch-empty-state"><div class="srch-empty-ic"><i data-lucide="search-x"></i></div><div class="srch-empty-t">No results found</div><div class="srch-empty-d">Nothing matched “'+esc(q)+'”. Try a different form name, attribute or keyword.</div></div>';
+  res.innerHTML=html;icons();
+}
+function addRecent(q){q=(q||'').trim();if(!q)return;recentSearches=[q].concat(recentSearches.filter(function(x){return x.toLowerCase()!==q.toLowerCase();})).slice(0,8);}
+function removeRecent(q){recentSearches=recentSearches.filter(function(x){return x!==q;});runSearch('');}
+function clearRecent(){recentSearches=[];runSearch('');}
+function pickRecent(q){document.getElementById('globalSearch').value=q;runSearch(q);}
+function pickSearch(tab,name){
+  addRecent((document.getElementById('globalSearch').value||'').trim()||name);
+  switchTab(tab);
+  if(tab==='attributes'){var i=document.getElementById('attrSearchInp');if(i)i.value=name;attrSearch(name);}
+  else if(tab==='forms'){var j=document.getElementById('formSearchInp');if(j)j.value=name;formSearch(name);}
+}
+function openFormAttrs(formId){
+  var f=getFormById(formId);if(!f)return;
+  var html=f.attributes.map(function(aid,i){var a=getAttrById(aid);if(!a)return '';
+    return '<div class="listrow"><span class="lr-num">'+(i+1)+'</span><span class="lr-name">'+esc(a.name)+'</span>'+
+      '<span class="badge '+(TYPE_BADGE[a.type]||'b-g')+'"><span class="dot"></span>'+a.type+'</span>'+
+      (a.required?'<span class="badge b-e"><span class="dot"></span>Required</span>':'<span class="badge b-g"><span class="dot"></span>Optional</span>')+'</div>';
+  }).join('');
+  openListModal(f.name,f.attributes.length+' attributes bound to this form',html);
+}
+function openSubmissionData(subId){
+  var s=submissions.find(function(x){return x.id===subId;});if(!s)return;
+  var form=getFormById(s.formId);
+  var html=s.data.map(function(e,i){var a=getAttrById(e.attributeId);
+    return '<div class="listrow"><span class="lr-num">'+(i+1)+'</span><span class="lr-name">'+esc(a?a.name:'Unknown')+'</span><span class="opt-chip">'+esc(fmtVal(e.value))+'</span></div>';
+  }).join('');
+  openListModal((form?form.name:'Submission')+' · data',s.data.length+' data field'+(s.data.length!==1?'s':''),html);
+}
+function openAttrOptions(attrId){
+  var a=getAttrById(attrId);if(!a||!a.options)return;
+  var html=a.options.map(function(o,i){
+    return '<div class="listrow"><span class="lr-num">'+(i+1)+'</span><span class="lr-name">'+esc(o)+'</span></div>';
+  }).join('');
+  openListModal(a.name+' · options',a.options.length+' dropdown options',html);
+}
+
+/* hover tooltip for charts (any [data-tip] element) */
+var _tip=document.createElement('div');_tip.className='charttip';document.body.appendChild(_tip);
+function positionTip(x,y){var r=_tip.getBoundingClientRect();var left=Math.max(8,Math.min(x-r.width/2,window.innerWidth-r.width-8));_tip.style.left=left+'px';_tip.style.top=(y-r.height-12)+'px';}
+document.addEventListener('mousemove',function(e){
+  var el=e.target&&e.target.closest?e.target.closest('[data-tip]'):null;
+  if(el){var txt=el.getAttribute('data-tip');if(_tip.textContent!==txt)_tip.textContent=txt;_tip.classList.add('show');positionTip(e.clientX,e.clientY);}
+  else if(_tip.classList.contains('show')){_tip.classList.remove('show');}
+});
+document.addEventListener('scroll',function(){_tip.classList.remove('show');},true);
+
+/* preferences (My Profile) */
+var prefsState={email:true,weekly:true,product:false};
+function applyPrefs(){document.getElementById('prefEmail').checked=prefsState.email;document.getElementById('prefWeekly').checked=prefsState.weekly;document.getElementById('prefProduct').checked=prefsState.product;}
+function savePrefs(){prefsState={email:document.getElementById('prefEmail').checked,weekly:document.getElementById('prefWeekly').checked,product:document.getElementById('prefProduct').checked};try{localStorage.setItem('tos_prefs',JSON.stringify(prefsState));}catch(e){}}
+function cancelPrefs(){applyPrefs();}
+
+/* boot */
+initSample();
+try{var sp=localStorage.getItem('tos_prefs');if(sp)prefsState=JSON.parse(sp);}catch(e){}
+applyPrefs();
+var _savedTab=null;try{_savedTab=localStorage.getItem('tos_tab');}catch(e){}
+if(_savedTab&&document.getElementById(_savedTab)&&document.getElementById(_savedTab).classList.contains('screen')){switchTab(_savedTab);}
+else{renderOverview();}
+icons();
+if(/[?&]login=1/.test(location.search)){document.getElementById('loginScreen').classList.add('show');window.scrollTo(0,0);icons();}
+</script>
+</body>
+</html>

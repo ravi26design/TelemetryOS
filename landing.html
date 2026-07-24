@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TelemetryOS — Turn every signal into insight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.474.0/dist/umd/lucide.min.js"></script>
+<style>
+:root{
+  --ink:#101828; --green:#39A248; --green-d:#2E8540; --green-soft:#EAF5EC; --blue:#1F4397; --metric:#2B3674;
+  --cta-primary:#1F4397; --cta-primary-h:#18316f; --cta-secondary:#1F4397; --cta-secondary-bd:#c3cfe9;
+  --muted:#5b6472; --muted-2:#6b7280; --faint:#8a909a;
+  --line:#eef0f4; --line-2:#dfe3ea; --bg:#fff; --bg-soft:#f6f8fc;
+  --shadow-card:0 24px 80px rgba(0,0,0,.10);
+  --shadow-float:0 12px 30px -8px rgba(43,54,116,.20);
+  --hover-lift:0 20px 42px -16px rgba(43,54,116,.30);
+  --sans:'Raleway','Segoe UI',Roboto,system-ui,Arial,sans-serif;
+  --num:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;line-height:1.5;font-size:16px;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+i[data-lucide]{display:inline-flex;width:18px;height:18px;flex:0 0 auto}
+svg.lucide{display:block;stroke-width:1.9}
+::selection{background:var(--green-soft);color:var(--ink)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #f0f0f0;height:66px;padding:0 max(24px,calc((100% - 1280px) / 2));display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:11px;cursor:pointer}
+.brand .mk{width:38px;height:38px;background:var(--green);border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px}
+.brand .b1{font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--blue)}
+.brand .b1 span{color:var(--green)}
+.navlinks{display:flex;gap:32px;position:absolute;left:50%;transform:translateX(-50%)}
+.navlinks a{font-size:14px;font-weight:600;color:#555;transition:color .15s}
+.navlinks a:hover{color:var(--ink)}
+.navcta{display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:700;cursor:pointer;white-space:nowrap;border:none;transition:transform .12s,box-shadow .2s,background .2s,border-color .15s}
+.btn i,.btn svg.lucide{width:17px;height:17px}
+.btn:active{transform:translateY(1px)}
+.btn-ghost{padding:9px 22px;border-radius:9px;font-size:14px;background:#fff;color:var(--cta-secondary);border:1px solid var(--cta-secondary-bd)}
+.btn-ghost:hover{background:var(--cta-secondary);color:#fff;border-color:var(--cta-secondary)}
+.btn-solid{padding:10px 22px;border-radius:9px;font-size:14px;background:var(--cta-primary);color:#fff;box-shadow:0 8px 18px -8px rgba(31,67,151,.5)}
+.btn-solid:hover{background:var(--cta-primary-h);transform:translateY(-1px);box-shadow:0 12px 24px -8px rgba(31,67,151,.5)}
+.btn-lg{padding:15px 30px;font-size:15px;border-radius:11px}
+.btn-sec{padding:14px 26px;border-radius:11px;font-size:15px;font-weight:700;background:#fff;color:var(--cta-secondary);border:1px solid var(--cta-secondary-bd)}
+.btn-sec:hover{background:var(--cta-secondary);color:#fff;border-color:var(--cta-secondary);box-shadow:0 8px 18px -8px rgba(31,67,151,.4)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;min-height:calc(100dvh - 66px);display:flex;align-items:center;padding:28px max(24px,calc((100% - 1280px) / 2)) 44px}
+.hero::before{content:'';position:absolute;top:-140px;right:-120px;width:780px;height:700px;z-index:0;pointer-events:none;background:radial-gradient(closest-side,rgba(57,162,72,.14),rgba(57,162,72,.04) 56%,transparent 72%)}
+.hero-grid{position:relative;z-index:1;width:100%;display:grid;grid-template-columns:1.02fr 1fr;gap:56px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green-d);background:var(--green-soft);border:1px solid #cdebd4;padding:7px 14px 7px 10px;border-radius:999px;margin-bottom:24px}
+.eyebrow .pd{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(57,162,72,.16)}
+h1{font-size:clamp(40px,4.7vw,54px);font-weight:800;letter-spacing:-.03em;line-height:1.07;color:var(--ink);margin-bottom:20px}
+h1 em{font-style:normal;color:var(--green)}
+.lead{font-size:17px;color:var(--muted);line-height:1.6;max-width:500px;margin-bottom:34px}
+.actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hero-stats{display:flex;align-items:center;gap:28px;margin-top:46px;padding-top:28px;border-top:1px solid #eef0f2;flex-wrap:wrap}
+.hstat .hv{font-family:var(--num);font-size:26px;font-weight:800;color:var(--metric);letter-spacing:-.02em}
+.hstat .hl{font-size:12px;color:var(--faint);font-weight:600;margin-top:3px}
+
+.rev{opacity:0;transform:translateY(16px);animation:rise .7s cubic-bezier(.2,.7,.25,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.d1{animation-delay:.05s}.d2{animation-delay:.13s}.d3{animation-delay:.22s}.d4{animation-delay:.31s}.d5{animation-delay:.41s}
+
+/* mockup */
+.stage{position:relative;min-height:500px}
+.mock{position:relative;z-index:2;width:112%;max-width:800px;background:#fff;border:1px solid #e8e8e8;border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden;display:flex;opacity:0;transform:translateY(26px) scale(.985);animation:rise .9s .3s cubic-bezier(.2,.7,.25,1) forwards}
+.m-side{width:184px;flex:0 0 auto;background:#fff;border-right:1px solid var(--line);padding:16px 12px}
+.m-brand{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.m-brand .mm{width:26px;height:26px;border-radius:8px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:9px;font-weight:800}
+.m-brand b{font-size:13px;font-weight:800;letter-spacing:-.01em;color:var(--blue)}
+.m-brand b span{color:var(--green)}
+.m-nav{display:flex;flex-direction:column;gap:3px}
+.m-nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;font-size:12.5px;font-weight:600;color:#6b7280}
+.m-nav a i,.m-nav a svg.lucide{width:15px;height:15px}
+.m-nav a.on{background:var(--blue);color:#fff}
+.m-main{flex:1;min-width:0;padding:16px 18px 20px;background:#f7f8fa}
+.m-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.m-search{flex:1;height:34px;border-radius:9px;background:#fff;border:1px solid #ececef;display:flex;align-items:center;gap:8px;padding:0 12px;color:#9aa5bb;font-size:12.5px}
+.m-search i,.m-search svg.lucide{width:14px;height:14px}
+.m-h{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--ink);margin-bottom:14px}
+.m-cards{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.m-card{border:1px solid #ececec;border-radius:11px;padding:11px 13px;background:#fff}
+.m-card .cl{display:flex;align-items:center;justify-content:space-between;color:#6b7280;font-size:11px;font-weight:600}
+.m-card .cl .ci{width:24px;height:24px;border-radius:7px;background:#eef1f9;color:var(--blue);display:grid;place-items:center}
+.m-card .cl .ci i,.m-card .cl .ci svg.lucide{width:13px;height:13px}
+.m-card .cv{font-family:var(--num);font-size:22px;font-weight:800;letter-spacing:-.03em;color:var(--metric);margin-top:7px;line-height:1}
+.m-card .cd{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--green);margin-top:6px}
+.m-card .cd i,.m-card .cd svg.lucide{width:12px;height:12px}
+.m-chart{border:1px solid #ececec;border-radius:11px;padding:12px 14px;background:#fff}
+.m-chart .ch-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.m-chart .ch-t{font-size:11px;font-weight:800;color:var(--ink)}
+.m-legend{display:flex;gap:12px;font-size:9.5px;font-weight:700;color:#9aa0a6;letter-spacing:.04em}
+.m-legend span{display:inline-flex;align-items:center;gap:5px}
+.m-legend .dsh{width:12px;height:0;border-top:2px solid var(--green)}
+.m-legend .dsh.b{border-top:2px dotted var(--blue)}
+
+/* floating cards */
+.float{position:absolute;z-index:3;background:#fff;border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-float);padding:12px 15px;display:flex;align-items:center;gap:11px;opacity:0;animation:pop .6s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}
+.float .ficon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto}
+.float .ficon i,.float .ficon svg.lucide{width:18px;height:18px}
+.float .ft{font-weight:800;font-size:13px;color:var(--ink);line-height:1.2}
+.float .fs{font-size:11.5px;color:var(--muted-2);margin-top:2px}
+.float .fstars{display:flex;gap:2px;margin-top:3px}
+.float .fstars svg{width:12px;height:12px}
+.f-approved{top:6px;left:-26px;animation-delay:.75s}
+.f-approved .ficon{background:var(--green-soft);color:var(--green-d)}
+.f-reviewers{top:78px;right:-18px;animation-delay:.9s;padding:11px 16px 11px 12px}
+.f-reviewers .avs{display:flex}
+.f-reviewers .av{width:28px;height:28px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;margin-left:-8px}
+.f-reviewers .av:first-child{margin-left:0}
+.f-reviewers .fr{margin-left:6px}
+.f-reviewers .fr .ft{display:flex;align-items:center;gap:6px}
+.f-reviewers .fr .dotlive{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(57,162,72,.18)}
+.f-uploading{bottom:54px;left:-30px;animation-delay:1.05s;min-width:228px}
+.f-uploading .ficon{background:#eef1f9;color:var(--blue)}
+.f-bar{height:5px;border-radius:3px;background:#EAEEF6;margin-top:7px;overflow:hidden;width:128px}
+.f-bar span{display:block;height:100%;width:62%;background:var(--green);border-radius:3px;animation:load 2.4s ease-in-out infinite}
+@keyframes load{0%{width:22%}50%{width:78%}100%{width:22%}}
+.f-downloads{bottom:18px;right:-14px;animation-delay:1.2s}
+.f-downloads .ficon{background:var(--green-soft);color:var(--green-d)}
+.f-downloads .fbig{font-family:var(--num);font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.pulse{animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* sections shared */
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888;text-align:center;margin-bottom:12px}
+.sec-title{font-size:clamp(28px,3.4vw,36px);font-weight:800;letter-spacing:-.02em;color:var(--ink);text-align:center;margin-bottom:12px}
+.sec-sub{font-size:15px;color:#666;text-align:center;max-width:560px;margin:0 auto 52px;line-height:1.6}
+
+.caps{padding:78px max(24px,calc((100% - 1280px) / 2)) 88px;background:var(--bg-soft)}
+.caps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cap-card{--acc:#1F4397;position:relative;overflow:hidden;padding:28px 24px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 2px 10px rgba(43,54,116,.05);transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s}
+.cap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--acc);transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.cap-card:hover{--acc:#39A248;transform:translateY(-6px);border-color:var(--acc);box-shadow:var(--hover-lift)}
+.cap-card:hover::before{transform:scaleX(1)}
+.cap-ic{width:48px;height:48px;border-radius:14px;margin-bottom:18px;background:var(--acc);color:#fff;display:grid;place-items:center;box-shadow:0 9px 18px -8px var(--acc);transition:background .25s,box-shadow .25s}
+.cap-ic i,.cap-ic svg.lucide{width:22px;height:22px}
+.cap-t{font-size:16px;font-weight:800;letter-spacing:-.01em;color:var(--ink);margin-bottom:8px}
+.cap-d{font-size:13px;color:var(--muted-2);line-height:1.6}
+
+.benefits{padding:78px max(24px,calc((100% - 1280px) / 2)) 84px;background:#fff}
+.ben-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.ben-card{--acc:#39A248;position:relative;overflow:hidden;padding:26px 24px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 8px rgba(43,54,116,.06);transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s}
+.ben-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--acc);transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.ben-card:hover{transform:translateY(-6px);border-color:var(--acc);box-shadow:var(--hover-lift)}
+.ben-card:hover::before{transform:scaleX(1)}
+.ben-ic{width:46px;height:46px;border-radius:13px;margin-bottom:16px;background:var(--acc);color:#fff;display:grid;place-items:center;box-shadow:0 9px 18px -8px var(--acc)}
+.ben-ic i,.ben-ic svg.lucide{width:21px;height:21px}
+.ben-t{font-size:15.5px;font-weight:800;letter-spacing:-.01em;color:var(--ink);margin-bottom:8px}
+.ben-d{font-size:13px;color:var(--muted-2);line-height:1.6}
+
+.how{padding:78px max(24px,calc((100% - 1280px) / 2)) 88px;background:var(--bg-soft)}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.how-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px 24px;box-shadow:0 2px 10px rgba(43,54,116,.05)}
+.how-num{width:40px;height:40px;border-radius:12px;background:var(--blue);color:#fff;font-family:var(--num);font-weight:800;font-size:16px;display:grid;place-items:center;margin-bottom:16px}
+.how-t{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:8px}
+.how-d{font-size:13px;color:var(--muted-2);line-height:1.6}
+
+.cta-band{padding:82px max(24px,calc((100% - 1280px) / 2));background:linear-gradient(140deg,#16357d,#1F4397 55%,#2a6bcf);text-align:center;position:relative;overflow:hidden}
+.cta-band::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.1) 1px,transparent 1px);background-size:24px 24px;opacity:.5}
+.cta-band>*{position:relative;z-index:1}
+.cta-band h2{font-size:clamp(28px,3.4vw,36px);font-weight:800;letter-spacing:-.02em;color:#fff;margin-bottom:12px}
+.cta-band p{font-size:15px;color:#d3daf3;margin-bottom:34px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.6}
+.cta-white{padding:15px 40px;border-radius:11px;font-size:15px;font-weight:700;background:#fff;color:var(--cta-primary);border:none;cursor:pointer;box-shadow:0 10px 26px -10px rgba(0,0,0,.4);display:inline-flex;align-items:center;gap:8px;transition:transform .12s,background .15s;text-decoration:none}
+.cta-white:hover{background:#eef1f8;transform:translateY(-2px)}
+.cta-white i,.cta-white svg.lucide{width:18px;height:18px}
+
+.footer{padding:26px max(24px,calc((100% - 1280px) / 2));background:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.footer .fl{display:flex;align-items:center;gap:10px;font-size:13px;color:#c5cbe8}
+.footer .fm{width:28px;height:28px;border-radius:8px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:8px;font-weight:800}
+.footer .fr{display:flex;gap:22px;font-size:13px}
+.footer .fr a{color:#c5cbe8;cursor:pointer}.footer .fr a:hover{color:#fff}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,.84,.44,1),transform .7s cubic-bezier(.16,.84,.44,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:1140px){
+  .hero{min-height:0;padding-top:48px;padding-bottom:64px}
+  .hero-grid{grid-template-columns:1fr;gap:48px}
+  .stage{min-height:460px;display:flex;justify-content:center}
+  .mock{width:100%;max-width:660px}
+  .navlinks{display:none}
+  .caps-grid,.ben-grid,.how-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .nav{padding:0 20px}
+  .hero{padding:40px 20px 60px}
+  .lead{font-size:16px}
+  .hero-stats{gap:20px}
+  .hstat .hv{font-size:22px}
+  .caps,.benefits,.how{padding:56px 20px 64px}
+  .caps-grid,.ben-grid,.how-grid{grid-template-columns:1fr}
+  .f-approved{left:-8px}.f-uploading{left:-8px;min-width:200px}.f-downloads{right:-4px}.f-reviewers{right:-4px}
+  .btn-ghost.nav-signin{display:none}
+  .footer{flex-direction:column;text-align:center}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="mk">TOS</span>
+    <span class="b1">Telemetry<span>OS</span></span>
+  </a>
+  <nav class="navlinks">
+    <a href="#capabilities">Capabilities</a>
+    <a href="#benefits">Benefits</a>
+    <a href="#how">How it works</a>
+  </nav>
+  <div class="navcta">
+    <a class="btn btn-ghost nav-signin" href="index.html?login=1">Sign In</a>
+    <a class="btn btn-solid" href="index.html">Get Started <i data-lucide="arrow-right"></i></a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <h1 class="rev d2" style="margin-top:6px">The smarter way to <em>capture telemetry</em></h1>
+      <p class="lead rev d3">A purpose-built platform to define attributes, build telemetry forms, and turn every submission into ratings, sentiment and insight — across all your tools and organizations.</p>
+      <div class="actions rev d4">
+        <a class="btn btn-solid btn-lg" href="index.html">Get Started <i data-lucide="arrow-right"></i></a>
+        <a class="btn btn-sec" href="#capabilities">See how it works</a>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="stage">
+        <div class="mock">
+          <aside class="m-side">
+            <div class="m-brand"><span class="mm">TOS</span><b>Telemetry<span>OS</span></b></div>
+            <nav class="m-nav">
+              <a class="on"><i data-lucide="layout-dashboard"></i>Overview</a>
+              <a><i data-lucide="tag"></i>Attributes</a>
+              <a><i data-lucide="clipboard-list"></i>Forms</a>
+              <a><i data-lucide="database"></i>Responses</a>
+              <a><i data-lucide="bell"></i>Notifications</a>
+            </nav>
+          </aside>
+          <div class="m-main">
+            <div class="m-top"><div class="m-search"><i data-lucide="search"></i>Search forms, attributes, tools…</div></div>
+            <div class="m-h">Telemetry Overview</div>
+            <div class="m-cards">
+              <div class="m-card"><div class="cl">Total Responses <span class="ci"><i data-lucide="database"></i></span></div><div class="cv">25</div><div class="cd"><i data-lucide="trending-up"></i>+8%</div></div>
+              <div class="m-card"><div class="cl">Avg Rating <span class="ci"><i data-lucide="star"></i></span></div><div class="cv">4.2</div><div class="cd"><i data-lucide="trending-up"></i>+0.3</div></div>
+              <div class="m-card"><div class="cl">Positive <span class="ci"><i data-lucide="smile"></i></span></div><div class="cv">78%</div><div class="cd"><i data-lucide="trending-up"></i>+5%</div></div>
+              <div class="m-card"><div class="cl">Active Forms <span class="ci"><i data-lucide="clipboard-list"></i></span></div><div class="cv">10</div><div class="cd"><i data-lucide="trending-up"></i>+2</div></div>
+            </div>
+            <div class="m-chart">
+              <div class="ch-top"><span class="ch-t">Sentiment Trend</span><span class="m-legend"><span><span class="dsh"></span>POSITIVE</span><span><span class="dsh b"></span>NEUTRAL</span></span></div>
+              <svg viewBox="0 0 460 90" width="100%" height="90" preserveAspectRatio="none">
+                <defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(57,162,72,.16)"/><stop offset="1" stop-color="rgba(57,162,72,0)"/></linearGradient></defs>
+                <path d="M8 66 L92 54 L176 60 L260 32 L344 38 L452 24 L452 90 L8 90 Z" fill="url(#gg)"/>
+                <polyline points="8,66 92,54 176,60 260,32 344,38 452,24" fill="none" stroke="#39A248" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="8,78 92,74 176,68 260,70 344,62 452,58" fill="none" stroke="#1F4397" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/>
+                <circle cx="260" cy="32" r="3.5" fill="#39A248"/><circle cx="452" cy="24" r="3.5" fill="#39A248"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="float f-approved pulse">
+          <span class="ficon"><i data-lucide="check"></i></span>
+          <div><div class="ft">New Response</div><div class="fs">Maya · Commons Telemetry</div>
+            <div class="fstars">
+              <svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg viewBox="0 0 24 24" fill="#F5A623" stroke="#F5A623" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="float f-reviewers">
+          <div class="avs">
+            <span class="av" style="background:#1F4397">MR</span>
+            <span class="av" style="background:#39A248">JC</span>
+            <span class="av" style="background:#2B3674">DK</span>
+            <span class="av" style="background:#8894ac">+9</span>
+          </div>
+          <div class="fr"><div class="ft">12 respondents <span class="dotlive"></span></div><div class="fs">this week</div></div>
+        </div>
+        <div class="float f-uploading pulse">
+          <span class="ficon"><i data-lucide="activity"></i></span>
+          <div><div class="ft">Analyzing…</div><div class="fs">Sentiment breakdown</div><div class="f-bar"><span></span></div></div>
+        </div>
+        <div class="float f-downloads">
+          <span class="ficon"><i data-lucide="trending-up"></i></span>
+          <div><div class="fbig">+15% Responses</div><div class="fs">this month</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="caps" id="capabilities">
+  <div class="sec-label">Capabilities</div>
+  <h2 class="sec-title">Everything you need to hear your users</h2>
+  <p class="sec-sub">A unified platform to define attributes, build forms, and understand ratings and sentiment across every tool.</p>
+  <div class="caps-grid">
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="tag"></i></span><div class="cap-t">Attribute Manager</div><p class="cap-d">Create reusable fields — text, number, dropdown, boolean and date — with options and validation baked in.</p></div>
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="clipboard-list"></i></span><div class="cap-t">Form Builder</div><p class="cap-d">Compose telemetry forms from your attributes, then bind each one to a tool or organization program.</p></div>
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="smile"></i></span><div class="cap-t">Ratings &amp; Sentiment</div><p class="cap-d">Capture star ratings and classify every response positive, neutral or negative — automatically.</p></div>
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="layout-dashboard"></i></span><div class="cap-t">Live Dashboard</div><p class="cap-d">Real-time metrics, rating-by-tool charts and sentiment breakdowns across every organization.</p></div>
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="database"></i></span><div class="cap-t">SyncTelemetry API</div><p class="cap-d">Submit and validate telemetry data — form, attributes and types — before it lands in the database.</p></div>
+    <div class="cap-card"><span class="cap-ic"><i data-lucide="messages-square"></i></span><div class="cap-t">Response Management</div><p class="cap-d">Search, filter and drill into every individual submission with full context and comments.</p></div>
+  </div>
+</section>
+
+<section class="benefits reveal" id="benefits">
+  <div class="sec-label">Benefits</div>
+  <h2 class="sec-title">Why teams choose TelemetryOS</h2>
+  <p class="sec-sub">Built for platform teams that want to turn scattered telemetry into clear, actionable insight.</p>
+  <div class="ben-grid">
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="activity"></i></span><div class="ben-t">Real-time Insights</div><p class="ben-d">Watch ratings and sentiment update the moment a submission arrives — no spreadsheets or manual tallying.</p></div>
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="filter"></i></span><div class="ben-t">Filter by Everything</div><p class="ben-d">Slice telemetry by organization, tool, date and sentiment in a single click across every page.</p></div>
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="alert-triangle"></i></span><div class="ben-t">Spot What Needs Attention</div><p class="ben-d">Instantly surface your highest-rated tools and the ones that need the most work.</p></div>
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="message-circle"></i></span><div class="ben-t">Every Signal Counts</div><p class="ben-d">Capture open-text remarks alongside scores so you get the full story behind every rating.</p></div>
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="users"></i></span><div class="ben-t">Built for Teams</div><p class="ben-d">Shared dashboards and a clean, consistent design keep everyone aligned on what users think.</p></div>
+    <div class="ben-card"><span class="ben-ic"><i data-lucide="shield"></i></span><div class="ben-t">Secure &amp; Reliable</div><p class="ben-d">Your telemetry data stays private, organized and audit-ready from the first response onward.</p></div>
+  </div>
+</section>
+
+<section class="how reveal" id="how">
+  <div class="sec-label">How it works</div>
+  <h2 class="sec-title">From attribute to insight in three steps</h2>
+  <p class="sec-sub">Set up once and let the responses roll into a dashboard that updates itself.</p>
+  <div class="how-grid">
+    <div class="how-card"><div class="how-num">1</div><div class="how-t">Define &amp; build</div><p class="how-d">Create your attributes, compose a form, bind it to a tool or organization, and publish in minutes.</p></div>
+    <div class="how-card"><div class="how-num">2</div><div class="how-t">Collect responses</div><p class="how-d">Users submit ratings, sentiment and remarks. Each response is validated and stored instantly.</p></div>
+    <div class="how-card"><div class="how-num">3</div><div class="how-t">Act on insight</div><p class="how-d">Track satisfaction, spot trends, and know exactly which tools need attention.</p></div>
+  </div>
+</section>
+
+<section class="cta-band reveal">
+  <h2>Ready to turn telemetry into insight?</h2>
+  <p>Sign in to define attributes, build forms, collect responses, and track satisfaction across every platform tool.</p>
+  <a class="cta-white" href="index.html">Get Started <i data-lucide="arrow-right"></i></a>
+</section>
+
+<footer class="footer">
+  <div class="fl"><span class="fm">TOS</span><span>© 2026 TelemetryOS</span></div>
+  <nav class="fr"><a href="index.html?login=1">Sign In</a><a href="index.html">Get Started</a><a>Privacy</a><a>Terms</a></nav>
+</footer>
+
+<script>
+if(window.lucide)lucide.createIcons();
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+</script>
+</body>
+</html>
